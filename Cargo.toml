@@ -1,0 +1,11 @@
+[package]
+name = "rust-ray-tracer"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cgmath = "0.18"
+image = "0.24"  # for writing images
+rand = "0.8"  # for generating random numbers
