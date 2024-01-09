@@ -22,7 +22,7 @@ fn white_balance(color: Vec3, balance: Vec3) -> Vec3 {
     color.mul_element_wise(balance)
 }
 
-pub fn render(scene: &Scene, camera: &Camera) -> RgbImage {
+pub fn render<C: Camera>(scene: &Scene, camera: &C) -> RgbImage {
     let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH, IMAGE_HEIGHT);
     let mut rng = rand::thread_rng();
 
