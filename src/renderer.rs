@@ -8,7 +8,7 @@ use rand::Rng;
 
 pub const IMAGE_WIDTH: u32 = 320;
 pub const IMAGE_HEIGHT: u32 = 240;
-pub const SAMPLES_PER_PIXEL: u32 = 16;
+pub const SAMPLES_PER_PIXEL: u32 = 128;
 
 fn reinhard_tone_mapping(color: Vec3) -> Vec3 {
     color.div_element_wise(color + Vec3::new(1.0, 1.0, 1.0))

@@ -1,17 +1,18 @@
 use super::material::Material;
 use super::math::{Point, Ray, Vec3};
 use cgmath::InnerSpace;
+use std::sync::Arc;
 
 pub struct Sphere {
     pub center: Point,
     pub radius: f32,
-    pub material: Material,
+    pub material: Arc<dyn Material>,
 }
 
 pub struct Plane {
     pub point: Point,
     pub normal: Vec3,
-    pub material: Material,
+    pub material: Arc<dyn Material>,
 }
 
 pub enum Object {
@@ -23,7 +24,7 @@ pub struct HitRecord {
     pub t: f32,
     pub p: Point,
     pub normal: Vec3,
-    pub material: Material,
+    pub material: Arc<dyn Material>,
 }
 
 impl Sphere {
@@ -53,8 +54,8 @@ impl Sphere {
         Some(HitRecord {
             t: root,
             p: point,
-            normal,
-            material: self.material.clone(),
+            normal: normal,
+            material: Arc::clone(&self.material),
         })
     }
 }
@@ -76,7 +77,7 @@ impl Plane {
             t: distance,
             p: ray.at(distance),
             normal: self.normal,
-            material: self.material.clone(),
+            material: Arc::clone(&self.material),
         })
     }
 }
