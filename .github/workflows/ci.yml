@@ -37,3 +37,12 @@ jobs:
       with:
         command: test
         args: --verbose
+
+    - name: Render scenes
+      run: cargo run -r
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: output-image
+        path: output.png
