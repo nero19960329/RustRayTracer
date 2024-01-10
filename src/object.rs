@@ -1,6 +1,7 @@
 use super::material::Material;
 use super::math::{Point, Ray, Vec3};
 use cgmath::InnerSpace;
+use log::info;
 
 pub struct Sphere {
     pub center: Point,
@@ -34,12 +35,15 @@ impl Sphere {
         let c = oc.magnitude2() - self.radius * self.radius;
         let discriminant = half_b * half_b - a * c;
 
+        // info!("oc: {:?}, a: {}, half_b: {}, c: {}, discriminant: {}", oc, a, half_b, c, discriminant);
+
         if discriminant < 0.0 {
             return None;
         }
 
         let sqrtd = discriminant.sqrt();
         let mut root = (-half_b - sqrtd) / a;
+        // info!("root: {}, t_min: {}, t_max: {}", root, t_min, t_max);
         if root < t_min || root > t_max {
             root = (-half_b + sqrtd) / a;
             if root < t_min || root > t_max {

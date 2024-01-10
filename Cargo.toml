@@ -9,3 +9,5 @@ edition = "2021"
 cgmath = "0.18"
 image = "0.24"  # for writing images
 rand = "0.8"  # for generating random numbers
+log = "0.4"  # for logging
+fern = "0.6"  # for logging

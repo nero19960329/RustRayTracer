@@ -5,7 +5,7 @@ use cgmath::{ElementWise, InnerSpace};
 use rand::Rng;
 use std::f32::consts::PI;
 
-const MAX_DEPTH: u32 = 2;
+const MAX_DEPTH: u32 = 5;
 
 fn build_local_coordinate_system(normal: Vec3) -> (Vec3, Vec3, Vec3) {
     let w = normal;
@@ -38,10 +38,18 @@ pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3 {
         return Vec3::new(0.0, 0.0, 0.0);
     }
 
+    // info!("DEPTH: {}, ray.origin: {:?}, ray.direction: {:?}", depth, ray.origin, ray.direction);
+
     if let Some(hit) = scene.intersect(ray) {
+        // info!("DEPTH: {}, hit.p: {:?}, hit.normal: {:?}", depth, hit.p, hit.normal);
+
         match hit.material {
-            Material::Emissive(color) => color,
+            Material::Emissive(color) => {
+                // info!("DEPTH: {}, HIT EMISSIVE", depth);
+                color
+            }
             Material::Lambertian(color) => {
+                // info!("DEPTH: {}, HIT LAMBERTIAN", depth);
                 if hit.normal.dot(ray.direction) > 0.0 {
                     return Vec3::new(0.0, 0.0, 0.0);
                 }
@@ -50,7 +58,10 @@ pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3 {
                     origin: hit.p + new_direction * 1e-3,
                     direction: new_direction,
                 };
-                color.mul_element_wise(trace(&new_ray, scene, depth + 1))
+                // info!("DEPTH: {}, new_ray.origin: {:?}, new_ray.direction: {:?}", depth, new_ray.origin, new_ray.direction);
+                let new_color = color.mul_element_wise(trace(&new_ray, scene, depth + 1));
+                // info!("DEPTH: {}, new_color: {:?}", depth, new_color);
+                new_color
             }
             Material::Metallic(color, fuzz) => {
                 // ... MCPT for metallic material
