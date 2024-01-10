@@ -6,14 +6,14 @@ mod raytracer;
 mod renderer;
 mod scene;
 
-use camera::Camera;
+use camera::PerspectiveCamera;
 use math::{Point, Vec3};
 use renderer::{render, IMAGE_HEIGHT, IMAGE_WIDTH};
 use scene::Scene;
 
 fn main() {
     let scene = Scene::new();
-    let camera = Camera::new(
+    let camera = PerspectiveCamera::new(
         Point::new(0.0, 0.0, 1.0),
         Point::new(0.0, 0.0, -1.0),
         Vec3::new(0.0, 1.0, 0.0),
