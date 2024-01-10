@@ -72,6 +72,38 @@ impl Camera for OrthographicCamera {
     }
 }
 
+pub struct SphericalPanoramicCamera {
+    origin: Point,
+}
+
+impl SphericalPanoramicCamera {
+    pub fn new(look_from: Point) -> Self {
+        Self {
+            origin: look_from,
+        }
+    }
+
+    // generate ray from spherical coordinates
+    fn spherical_to_direction(&self, theta: f32, phi: f32) -> Vec3 {
+        Vec3::new(
+            theta.sin() * phi.cos(),
+            theta.sin() * phi.sin(),
+            theta.cos(),
+        )
+    }
+}
+
+impl Camera for SphericalPanoramicCamera {
+    fn create_ray(&self, s: f32, t: f32) -> Ray {
+        let theta = PI * s;
+        let phi = 2.0 * PI * t;
+        Ray {
+            origin: self.origin,
+            direction: self.spherical_to_direction(theta, phi),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -118,6 +150,20 @@ mod tests {
         assert!(vec3_approx_eq(
             ray.direction,
             Vec3::new(0.0, 0.0, -1.0),
+            1e-6
+        ));
+    }
+
+    #[test]
+    fn test_spherical_panoramic_camera() {
+        let camera = SphericalPanoramicCamera::new(
+            Point::new(0.0, 0.0, 0.0)
+        );
+        let ray = camera.create_ray(0.5, 0.5);
+        assert!(point_approx_eq(ray.origin, Point::new(0.0, 0.0, 0.0), 1e-6));
+        assert!(vec3_approx_eq(
+            ray.direction,
+            Vec3::new(-1.0, 0.0, 0.0),
             1e-6
         ));
     }

@@ -31,8 +31,8 @@ pub fn render<C: Camera>(scene: &Scene, camera: &C) -> RgbImage {
         for _ in 0..SAMPLES_PER_PIXEL {
             let u_offset: f32 = rng.gen();
             let v_offset: f32 = rng.gen();
-            let u = (x as f32 + u_offset) / (IMAGE_WIDTH - 1) as f32;
-            let v = 1.0 - (y as f32 + v_offset) / (IMAGE_HEIGHT - 1) as f32;
+            let u = (x as f32 + u_offset + 0.5) / IMAGE_WIDTH as f32;
+            let v = 1.0 - (y as f32 + v_offset + 0.5) / IMAGE_HEIGHT as f32;
             let ray = camera.create_ray(u, v);
             color += trace(&ray, scene, 0);
         }

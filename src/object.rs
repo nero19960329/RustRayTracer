@@ -48,7 +48,11 @@ impl Sphere {
         }
 
         let point = ray.at(root);
-        let normal = (point - self.center) / self.radius;
+        let mut normal = (point - self.center).normalize();
+        // XXX: if hit from inside, flip the normal
+        if ray.direction.dot(normal) > 0.0 {
+            normal = -normal;
+        }
 
         Some(HitRecord {
             t: root,

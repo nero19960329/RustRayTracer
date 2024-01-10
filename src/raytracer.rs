@@ -1,18 +1,36 @@
 use super::material::Material;
 use super::math::{Ray, Vec3};
 use super::scene::Scene;
-use cgmath::ElementWise;
+use cgmath::{ElementWise, InnerSpace};
 use rand::Rng;
 use std::f32::consts::PI;
 
-const MAX_DEPTH: u32 = 5;
+const MAX_DEPTH: u32 = 2;
 
-fn random_in_unit_sphere() -> Vec3 {
+fn build_local_coordinate_system(normal: Vec3) -> (Vec3, Vec3, Vec3) {
+    let w = normal;
+    let a = if w.x.abs() > 0.9 {
+        Vec3::new(0.0, 1.0, 0.0)
+    } else {
+        Vec3::new(1.0, 0.0, 0.0)
+    };
+    let u = w.cross(a).normalize();
+    let v = w.cross(u).normalize();
+    (u, v, w)
+}
+
+fn random_in_hemisphere(normal: Vec3) -> Vec3 { // cosine-weighted hemisphere sampling
     let mut rng = rand::thread_rng();
-    let a: f32 = rng.gen_range(0.0..2.0 * PI);
-    let z: f32 = rng.gen_range(0.0..1.0);
-    let r = (1.0 - z * z).sqrt();
-    Vec3::new(r * a.cos(), r * a.sin(), z)
+    let u: f32 = rng.gen();
+    let v: f32 = rng.gen();
+    let theta = (1.0 - u).sqrt().acos();
+    let phi = 2.0 * PI * v;
+    let x = theta.sin() * phi.cos();
+    let y = theta.sin() * phi.sin();
+    let z = theta.cos();
+
+    let (local_u, local_v, local_w) = build_local_coordinate_system(normal);
+    local_u * x + local_v * y + local_w * z
 }
 
 pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3 {
@@ -24,10 +42,13 @@ pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3 {
         match hit.material {
             Material::Emissive(color) => color,
             Material::Lambertian(color) => {
-                let target = hit.p + hit.normal + random_in_unit_sphere();
+                if hit.normal.dot(ray.direction) > 0.0 {
+                    return Vec3::new(0.0, 0.0, 0.0);
+                }
+                let new_direction = random_in_hemisphere(hit.normal);
                 let new_ray = Ray {
-                    origin: hit.p,
-                    direction: target - hit.p,
+                    origin: hit.p + new_direction * 1e-3,
+                    direction: new_direction,
                 };
                 color.mul_element_wise(trace(&new_ray, scene, depth + 1))
             }
