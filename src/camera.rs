@@ -2,7 +2,7 @@ use super::math::{Point, Ray, Vec3};
 use cgmath::InnerSpace;
 use std::f32::consts::PI;
 
-pub trait Camera {
+pub trait Camera: Sync + Send {
     fn create_ray(&self, s: f32, t: f32) -> Ray;
 }
 

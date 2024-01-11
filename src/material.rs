@@ -39,7 +39,7 @@ impl ScatterResult {
     }
 }
 
-pub trait Material {
+pub trait Material: Sync + Send {
     fn scatter(&self, ray_in: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult>;
 
     fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, hit_point: Point, normal: Vec3) -> Vec3;
