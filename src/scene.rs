@@ -1,4 +1,4 @@
-use super::material::{Emissive, Lambertian};
+use super::material::{Emissive, IdealReflector, Lambertian};
 use super::math::{Point, Ray, Vec3};
 use super::object::{HitRecord, Object, Plane, Sphere};
 use std::sync::Arc;
@@ -77,9 +77,7 @@ impl Scene {
         objects.push(Object::Sphere(Sphere {
             center: Point::new(27.0, 16.5, 47.0),
             radius: 16.5,
-            material: Arc::new(Lambertian {
-                albedo: Vec3::new(0.8, 0.6, 0.4),
-            }),
+            material: Arc::new(IdealReflector {}),
         }));
 
         objects.push(Object::Sphere(Sphere {
