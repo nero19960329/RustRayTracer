@@ -15,17 +15,11 @@ fn local_coordinate_system(normal: Vec3) -> (Vec3, Vec3, Vec3) {
     (u, v, w)
 }
 
-fn random_in_hemisphere_cosine_weighted() -> Vec3 {
-    let mut rng = rand::thread_rng();
-    let u: f32 = rng.gen();
-    let v: f32 = rng.gen();
-    let theta = (1.0 - u).sqrt().acos();
-    let phi = 2.0 * PI * v;
-    let x = theta.sin() * phi.cos();
-    let y = theta.sin() * phi.sin();
-    let z = theta.cos();
-
-    Vec3::new(x, y, z)
+fn spherical_to_world(theta: f32, phi: f32, normal: Vec3) -> Vec3 {
+    let (u, v, w) = local_coordinate_system(normal);
+    u.mul_element_wise(theta.sin() * phi.cos())
+        + v.mul_element_wise(theta.sin() * phi.sin())
+        + w.mul_element_wise(theta.cos())
 }
 
 pub struct ScatterResult {
@@ -49,31 +43,6 @@ pub trait Material: Sync + Send {
 }
 
 #[derive(Clone)]
-pub struct Lambertian {
-    pub albedo: Vec3,
-}
-
-impl Material for Lambertian {
-    fn scatter(&self, _: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult> {
-        let sampled_direction = random_in_hemisphere_cosine_weighted();
-        let (u, v, w) = local_coordinate_system(normal);
-        let new_direction = u.mul_element_wise(sampled_direction.x)
-            + v.mul_element_wise(sampled_direction.y)
-            + w.mul_element_wise(sampled_direction.z);
-        let new_ray = Ray {
-            origin: hit_point,
-            direction: new_direction,
-        };
-        let pdf = new_direction.dot(normal) * FRAC_1_PI;
-        Some(ScatterResult::new(new_ray, pdf))
-    }
-
-    fn bxdf(&self, _: &Ray, _: &Ray, _: Point, _: Vec3) -> Vec3 {
-        self.albedo * FRAC_1_PI
-    }
-}
-
-#[derive(Clone)]
 pub struct Emissive {
     pub color: Vec3,
 }
@@ -89,5 +58,101 @@ impl Material for Emissive {
 
     fn emission(&self) -> Vec3 {
         self.color
+    }
+}
+
+#[derive(Clone)]
+pub struct Lambertian {
+    pub albedo: Vec3,
+}
+
+impl Material for Lambertian {
+    fn scatter(&self, _: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult> {
+        let mut rng = rand::thread_rng();
+        let u: f32 = rng.gen();
+        let v: f32 = rng.gen();
+        let theta = (1.0 - u).sqrt().acos();
+        let phi = 2.0 * PI * v;
+
+        let new_direction = spherical_to_world(theta, phi, normal);
+        let new_ray = Ray {
+            origin: hit_point,
+            direction: new_direction,
+        };
+        let pdf = new_direction.dot(normal) * FRAC_1_PI;
+        Some(ScatterResult::new(new_ray, pdf))
+    }
+
+    fn bxdf(&self, _: &Ray, _: &Ray, _: Point, _: Vec3) -> Vec3 {
+        self.albedo * FRAC_1_PI
+    }
+}
+
+#[derive(Clone)]
+pub struct PhongSpecular {
+    pub specular: Vec3,
+    pub shininess: f32,
+}
+
+fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+    v - n * 2.0 * v.dot(n)
+}
+
+impl Material for PhongSpecular {
+    fn scatter(&self, ray_in: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult> {
+        let reflected = reflect(ray_in.direction, normal);
+        let mut rng = rand::thread_rng();
+        let u: f32 = rng.gen();
+        let v: f32 = rng.gen();
+        let theta = u.powf(1.0 / (self.shininess + 1.0)).acos();
+        let phi = 2.0 * PI * v;
+
+        let new_direction = spherical_to_world(theta, phi, reflected);
+        let new_ray = Ray {
+            origin: hit_point,
+            direction: new_direction,
+        };
+        let pdf = new_direction.dot(reflected).powf(self.shininess)
+            * (self.shininess + 1.0)
+            * FRAC_1_PI
+            * 0.5;
+        Some(ScatterResult::new(new_ray, pdf))
+    }
+
+    fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, _: Point, normal: Vec3) -> Vec3 {
+        let reflected = reflect(ray_in.direction, normal);
+        let cos_theta = reflected.dot(ray_out.direction);
+        if cos_theta < 0.0 {
+            Vec3::zero()
+        } else {
+            self.specular
+                * (self.shininess + 2.0)
+                * FRAC_1_PI
+                * 0.5
+                * cos_theta.powf(self.shininess)
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct IdealReflector {}
+
+impl Material for IdealReflector {
+    fn scatter(&self, ray_in: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult> {
+        let reflected = reflect(ray_in.direction, normal);
+        let new_ray = Ray {
+            origin: hit_point,
+            direction: reflected,
+        };
+        Some(ScatterResult::new(new_ray, 1.0))
+    }
+
+    fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, _: Point, normal: Vec3) -> Vec3 {
+        let reflected = reflect(ray_in.direction, normal);
+        if (ray_out.direction - reflected).magnitude2() < 1e-3 {
+            Vec3::new(1.0, 1.0, 1.0) / ray_out.direction.dot(normal)
+        } else {
+            Vec3::zero()
+        }
     }
 }
