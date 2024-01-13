@@ -1,0 +1,6 @@
+argparse
+gitpython
+loguru
+pillow
+pynacl
+requests

@@ -1,0 +1,68 @@
+name: Report
+
+env:
+  IMGUR_ACCESS_TOKEN: ${{ secrets.IMGUR_ACCESS_TOKEN }}
+  IMGUR_ALBUM_ID: ${{ secrets.IMGUR_ALBUM_ID }}
+  IMGUR_CLIENT_ID: ${{ secrets.IMGUR_CLIENT_ID }}
+  IMGUR_CLIENT_SECRET: ${{ secrets.IMGUR_CLIENT_SECRET }}
+  IMGUR_REFRESH_TOKEN: ${{ secrets.IMGUR_REFRESH_TOKEN }}
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  report:
+    permissions:
+      id-token: write
+      contents: read
+
+    name: Report
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'main' }}
+
+    - name: Google Cloud Auth
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: projects/${{ vars.GCP_PROJECT }}/locations/global/workloadIdentityPools/${{ vars.GCP_POOL }}/providers/${{ vars.GCP_PROVIDER }}
+        service_account: rust-ray-tracer@wangzhao-space-387002.iam.gserviceaccount.com
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+
+    - name: Install Python3
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Python dependencies
+      run: pip3 install -r requirements-dev.txt
+    
+    - name: Prepare imgur token
+      run: ./ci/imgur_access_token.py --gha
+
+    - name: Build
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release --all-features
+
+    - name: Generate Report
+      run: ./ci/gen_report.py --bin target/release/rust-ray-tracer --report-html report.html
+
+    - name: Upload Report
+      run: gsutil cp report.html gs://rust-ray-tracer/${{ github.run_number }}/report.html
