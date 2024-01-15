@@ -4,3 +4,9 @@
 [![CI](https://github.com/nero19960329/RustRayTracer/actions/workflows/ci.yml/badge.svg)](https://github.com/nero19960329/RustRayTracer/actions/workflows/ci.yml)
 
 A soft ray tracer implemented by Rust.
+
+# Example Scenes
+
+Cornell Box MCPT 320x240 16384spp (No refractive objects)
+
+![Cornell Box MCPT 320x240 16384spp](https://i.imgur.com/3sNq3hb.png)
