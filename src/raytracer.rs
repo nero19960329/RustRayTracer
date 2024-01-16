@@ -1,6 +1,7 @@
 use super::math::{Ray, Vec3};
 use super::scene::Scene;
-use cgmath::{ElementWise, InnerSpace, Zero};
+use cgmath::{Array, ElementWise, InnerSpace, Zero};
+use log::warn;
 use rand::Rng;
 
 const MAX_DEPTH: u32 = 10;
@@ -39,12 +40,17 @@ pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3 {
     if cos_theta <= 0.0 {
         return color;
     }
-    let income = cos_theta
-        * hit
-            .material
-            .bxdf(ray, &scatter_result.ray, hit.p, hit.normal)
-            .mul_element_wise(trace(&scatter_result.ray, scene, depth + 1))
+    let bxdf = hit
+        .material
+        .bxdf(ray, &scatter_result.ray, hit.p, hit.normal);
+    if !bxdf.is_finite() {
+        warn!("bxdf not finite, hit.material: {:?}", hit.material);
+    }
+    let income = cos_theta * bxdf.mul_element_wise(trace(&scatter_result.ray, scene, depth + 1))
         / scatter_result.pdf;
+    if !income.is_finite() {
+        warn!("income not finite");
+    }
     color += income / RUSSIAN_ROULETTE_PROB;
 
     return color;
