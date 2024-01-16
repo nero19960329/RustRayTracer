@@ -13,6 +13,8 @@ rayon = "1.8"  # for parallelism
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"  # for parsing config files
 clap = { version = "4.4", features = ["derive"] }
+log = "0.4"  # for logging
+env_logger = "0.9"  # for logging
 
 [dev-dependencies]
 approx = "0.5"  # for comparing floats

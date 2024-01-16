@@ -8,6 +8,7 @@ mod scene;
 
 use camera::PerspectiveCamera;
 use clap::Parser;
+use log::info;
 use math::{Point, Vec3};
 use renderer::{render, RenderConfig};
 use scene::Scene;
@@ -29,6 +30,9 @@ struct Args {
 }
 
 fn main() {
+    env_logger::init();
+
+    info!("RustRayTracer started.");
     let args = Args::parse();
 
     let render_config: RenderConfig = toml::from_str(&fs::read_to_string(args.config).unwrap())
@@ -42,5 +46,6 @@ fn main() {
         render_config.image.width as f32 / render_config.image.height as f32,
     );
     let img = render(&render_config, &scene, &camera);
-    img.save(args.output).unwrap();
+    img.save(&args.output).unwrap();
+    info!("Image saved to {}.", args.output);
 }

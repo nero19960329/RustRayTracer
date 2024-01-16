@@ -152,8 +152,9 @@ impl Material for IdealReflector {
 
     fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, _: Point, normal: Vec3) -> Vec3 {
         let reflected = reflect(ray_in.direction, normal);
-        if (ray_out.direction - reflected).magnitude2() < 1e-3 {
-            Vec3::new(1.0, 1.0, 1.0) / ray_out.direction.dot(normal)
+        let cos_theta = ray_out.direction.dot(normal);
+        if cos_theta > 1e-3 && (ray_out.direction - reflected).magnitude2() < 1e-3 {
+            Vec3::new(1.0, 1.0, 1.0) / cos_theta
         } else {
             Vec3::zero()
         }
