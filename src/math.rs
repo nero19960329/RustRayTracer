@@ -80,6 +80,17 @@ mod tests {
     use std::f32::consts::PI;
 
     #[test]
+    fn test_ray_at() {
+        let ray = Ray {
+            origin: Point::new(0.0, 0.0, 0.0),
+            direction: Vec3::new(1.0, 0.0, 0.0),
+        };
+        let t = 1.0;
+        let p = ray.at(t);
+        assert_eq!(p, Point::new(1.0, 0.0, 0.0));
+    }
+
+    #[test]
     fn test_reflect() {
         let mut rng = rand::thread_rng();
         for _ in 0..10 {
@@ -125,6 +136,62 @@ mod tests {
                     epsilon = 1e-3
                 );
             }
+        }
+    }
+
+    #[test]
+    fn test_fresnel() {
+        let mut rng = rand::thread_rng();
+        for _ in 0..10 {
+            let n = Vec3::new(rng.gen(), rng.gen(), rng.gen()).normalize();
+            let v = spherical_to_world(
+                rng.gen_range(0.5 * PI..PI), // hemisphere
+                rng.gen_range(0.0..2.0 * PI),
+                n,
+            );
+            assert!(v.dot(n) <= 0.0);
+            let eta_i = rng.gen_range(0.5..2.0);
+            let eta_t = rng.gen_range(0.5..2.0);
+            let cos_theta_i = (-v).dot(n);
+            let cos_theta_t = refract(v, n, eta_i / eta_t).map(|r| r.dot(-n));
+            if cos_theta_t.is_none() {
+                assert_abs_diff_eq!(fresnel(cos_theta_i, eta_i, eta_t), 1.0, epsilon = 1e-3);
+            } else {
+                let cos_theta_t = cos_theta_t.unwrap();
+                assert_abs_diff_eq!(
+                    fresnel(cos_theta_i, eta_i, eta_t),
+                    fresnel(cos_theta_t, eta_t, eta_i),
+                    epsilon = 1e-3
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_local_coordinate_system() {
+        let mut rng = rand::thread_rng();
+        for _ in 0..10 {
+            let n = Vec3::new(rng.gen(), rng.gen(), rng.gen()).normalize();
+            let (u, v, w) = local_coordinate_system(n);
+            assert_abs_diff_eq!(u.dot(v), 0.0, epsilon = 1e-6);
+            assert_abs_diff_eq!(v.dot(w), 0.0, epsilon = 1e-6);
+            assert_abs_diff_eq!(w.dot(u), 0.0, epsilon = 1e-6);
+            assert_abs_diff_eq!(u.magnitude(), 1.0, epsilon = 1e-6);
+            assert_abs_diff_eq!(v.magnitude(), 1.0, epsilon = 1e-6);
+            assert_abs_diff_eq!(w.magnitude(), 1.0, epsilon = 1e-6);
+        }
+    }
+
+    #[test]
+    fn test_spherical_to_world() {
+        let mut rng = rand::thread_rng();
+        for _ in 0..10 {
+            let n = Vec3::new(rng.gen(), rng.gen(), rng.gen()).normalize();
+            let theta = rng.gen_range(0.0..PI);
+            let phi = rng.gen_range(0.0..2.0 * PI);
+            let v = spherical_to_world(theta, phi, n);
+            assert_abs_diff_eq!(v.magnitude(), 1.0, epsilon = 1e-6);
+            assert_abs_diff_eq!(v.dot(n), theta.cos(), epsilon = 1e-6);
         }
     }
 }
