@@ -36,10 +36,7 @@ pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3 {
     if scatter_result.pdf <= 1e-3 {
         return color;
     }
-    let cos_theta = scatter_result.ray.direction.dot(hit.normal);
-    if cos_theta <= 0.0 {
-        return color;
-    }
+    let cos_theta = scatter_result.ray.direction.dot(hit.normal).abs();
     let bxdf = hit
         .material
         .bxdf(ray, &scatter_result.ray, hit.p, hit.normal);
