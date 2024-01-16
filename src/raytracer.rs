@@ -4,18 +4,22 @@ use cgmath::{Array, ElementWise, InnerSpace, Zero};
 use log::warn;
 use rand::Rng;
 
-const MAX_DEPTH: u32 = 10;
+const MIN_DEPTH: u32 = 3;
 const RUSSIAN_ROULETTE_PROB: f32 = 0.8;
 
 pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3 {
     let mut color = Vec3::zero();
     let mut rng = rand::thread_rng();
 
-    if depth >= MAX_DEPTH {
-        return color;
-    }
+    let p = {
+        if depth < MIN_DEPTH {
+            1.0
+        } else {
+            RUSSIAN_ROULETTE_PROB
+        }
+    };
 
-    if rng.gen::<f32>() > RUSSIAN_ROULETTE_PROB {
+    if rng.gen::<f32>() > p {
         return color;
     }
 
@@ -48,7 +52,7 @@ pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3 {
     if !income.is_finite() {
         warn!("income not finite");
     }
-    color += income / RUSSIAN_ROULETTE_PROB;
+    color += income / p;
 
     return color;
 }
