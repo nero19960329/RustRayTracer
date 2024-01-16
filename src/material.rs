@@ -2,6 +2,7 @@ use super::math::{reflect, spherical_to_world, Point, Ray, Vec3};
 use cgmath::{InnerSpace, Zero};
 use rand::Rng;
 use std::f32::consts::{FRAC_1_PI, PI};
+use std::fmt::Debug;
 
 pub struct ScatterResult {
     pub ray: Ray,
@@ -14,7 +15,7 @@ impl ScatterResult {
     }
 }
 
-pub trait Material: Sync + Send {
+pub trait Material: Sync + Send + Debug {
     fn scatter(&self, ray_in: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult>;
 
     fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, hit_point: Point, normal: Vec3) -> Vec3;
@@ -42,6 +43,14 @@ impl Material for Emissive {
     }
 }
 
+impl Debug for Emissive {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Emissive")
+            .field("color", &self.color)
+            .finish()
+    }
+}
+
 #[derive(Clone)]
 pub struct Lambertian {
     pub albedo: Vec3,
@@ -66,6 +75,14 @@ impl Material for Lambertian {
 
     fn bxdf(&self, _: &Ray, _: &Ray, _: Point, _: Vec3) -> Vec3 {
         self.albedo * FRAC_1_PI
+    }
+}
+
+impl Debug for Lambertian {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Lambertian")
+            .field("albedo", &self.albedo)
+            .finish()
     }
 }
 
@@ -111,6 +128,15 @@ impl Material for PhongSpecular {
     }
 }
 
+impl Debug for PhongSpecular {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PhongSpecular")
+            .field("specular", &self.specular)
+            .field("shininess", &self.shininess)
+            .finish()
+    }
+}
+
 #[derive(Clone)]
 pub struct IdealReflector {}
 
@@ -131,5 +157,11 @@ impl Material for IdealReflector {
         } else {
             Vec3::zero()
         }
+    }
+}
+
+impl Debug for IdealReflector {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("IdealReflector").finish()
     }
 }
