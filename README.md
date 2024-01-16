@@ -9,4 +9,4 @@ A soft ray tracer implemented by Rust.
 
 Cornell Box MCPT 320x240 16384spp (No refractive objects)
 
-![Cornell Box MCPT 320x240 16384spp](https://i.imgur.com/3sNq3hb.png)
+![Cornell Box MCPT 320x240 16384spp](https://i.imgur.com/b27Enof.png)
