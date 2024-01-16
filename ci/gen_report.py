@@ -52,7 +52,16 @@ def main(
         os.remove(artifact)
     if not os.path.exists(executable):
         raise RuntimeError(f"executable {executable} does not exist")
-    subprocess.run([str(executable)], check=True)
+    subprocess.run(
+        [
+            str(executable),
+            "--config",
+            "configs/render_debug_cornell_box.toml",
+            "--output",
+            "output.png",
+        ],
+        check=True,
+    )
 
     # turn output.png -> output.jpg
     im = Image.open(artifact)
