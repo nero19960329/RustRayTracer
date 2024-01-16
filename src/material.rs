@@ -1,5 +1,6 @@
-use super::math::{reflect, spherical_to_world, Point, Ray, Vec3};
-use cgmath::{InnerSpace, Zero};
+use super::math::{fresnel, reflect, refract, spherical_to_world, Point, Ray, Vec3};
+use cgmath::{Array, InnerSpace, Zero};
+use log::warn;
 use rand::Rng;
 use std::f32::consts::{FRAC_1_PI, PI};
 use std::fmt::Debug;
@@ -164,5 +165,106 @@ impl Material for IdealReflector {
 impl Debug for IdealReflector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("IdealReflector").finish()
+    }
+}
+
+#[derive(Clone)]
+pub struct IdealDielectric {
+    pub ior: f32, // index of refraction
+}
+
+impl Material for IdealDielectric {
+    fn scatter(&self, ray_in: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult> {
+        let mut outward_normal = normal; // normal pointing out of the surface
+
+        // check if ray is inside the object
+        let mut eta_i = 1.0;
+        let mut eta_t = self.ior;
+        if ray_in.direction.dot(normal) > 0.0 {
+            eta_i = self.ior;
+            eta_t = 1.0;
+            outward_normal = -normal;
+        }
+        let eta = eta_i / eta_t;
+
+        let unit_direction = ray_in.direction.normalize();
+        let cos_theta = (-unit_direction).dot(outward_normal);
+        let mut rng = rand::thread_rng();
+        let r: f32 = rng.gen();
+        let reflectance = fresnel(cos_theta, eta_i, eta_t);
+        if reflectance > 1.0 + 1e-3 {
+            panic!("reflectance > 1.0");
+        }
+        if r < reflectance {
+            // reflect
+            let reflected = reflect(unit_direction, outward_normal);
+            let new_ray = Ray {
+                origin: hit_point,
+                direction: reflected,
+            };
+            return Some(ScatterResult::new(new_ray, reflectance));
+        } else {
+            // refract
+            let refracted = refract(unit_direction, outward_normal, eta);
+            if refracted.is_none() {
+                return None;
+            }
+            let refracted = refracted.unwrap();
+            let new_ray = Ray {
+                origin: hit_point,
+                direction: refracted,
+            };
+            return Some(ScatterResult::new(new_ray, 1.0 - reflectance));
+        }
+    }
+
+    fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, _: Point, normal: Vec3) -> Vec3 {
+        let mut outward_normal = normal; // normal pointing out of the surface
+
+        // check if ray is inside the object
+        let mut eta_i = 1.0;
+        let mut eta_t = self.ior;
+        if ray_in.direction.dot(normal) > 0.0 {
+            eta_i = self.ior;
+            eta_t = 1.0;
+            outward_normal = -normal;
+        }
+        let eta = eta_i / eta_t;
+
+        let cos_theta_i = ray_in.direction.dot(normal).abs();
+        let cos_theta_t = ray_out.direction.dot(normal).abs();
+        if cos_theta_t < 1e-3 {
+            return Vec3::zero();
+        }
+
+        let reflectance = fresnel(cos_theta_i, eta_i, eta_t);
+        let transmittance = 1.0 - reflectance;
+
+        let reflect_dir = reflect(ray_in.direction, outward_normal);
+        let refract_dir = refract(ray_in.direction, outward_normal, eta).unwrap_or(Vec3::zero());
+
+        let mut bxdf = Vec3::zero();
+        if (reflect_dir - ray_out.direction).magnitude2() < 1e-3 {
+            bxdf = Vec3::new(1.0, 1.0, 1.0) * reflectance / cos_theta_t;
+        } else if (refract_dir - ray_out.direction).magnitude2() < 1e-3 {
+            bxdf = Vec3::new(1.0, 1.0, 1.0) * transmittance / (cos_theta_t * eta * eta);
+        }
+
+        if !bxdf.is_finite() {
+            warn!(
+                "bxdf not finite, reflectance: {}, transmittance: {}, cos_theta_t: {}, eta: {}",
+                reflectance, transmittance, cos_theta_t, eta,
+            )
+        }
+
+        bxdf
+    }
+}
+
+impl Debug for IdealDielectric {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("IdealDielectric")
+            .field("ior", &self.ior)
+            .finish()
     }
 }
