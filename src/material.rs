@@ -1,26 +1,7 @@
-use super::math::{Point, Ray, Vec3};
-use cgmath::{ElementWise, InnerSpace, Zero};
+use super::math::{reflect, spherical_to_world, Point, Ray, Vec3};
+use cgmath::{InnerSpace, Zero};
 use rand::Rng;
 use std::f32::consts::{FRAC_1_PI, PI};
-
-fn local_coordinate_system(normal: Vec3) -> (Vec3, Vec3, Vec3) {
-    let w = normal;
-    let a = if w.x.abs() > 0.9 {
-        Vec3::new(0.0, 1.0, 0.0)
-    } else {
-        Vec3::new(1.0, 0.0, 0.0)
-    };
-    let u = w.cross(a).normalize();
-    let v = w.cross(u).normalize();
-    (u, v, w)
-}
-
-fn spherical_to_world(theta: f32, phi: f32, normal: Vec3) -> Vec3 {
-    let (u, v, w) = local_coordinate_system(normal);
-    u.mul_element_wise(theta.sin() * phi.cos())
-        + v.mul_element_wise(theta.sin() * phi.sin())
-        + w.mul_element_wise(theta.cos())
-}
 
 pub struct ScatterResult {
     pub ray: Ray,
@@ -92,10 +73,6 @@ impl Material for Lambertian {
 pub struct PhongSpecular {
     pub specular: Vec3,
     pub shininess: f32,
-}
-
-fn reflect(v: Vec3, n: Vec3) -> Vec3 {
-    v - n * 2.0 * v.dot(n)
 }
 
 impl Material for PhongSpecular {
