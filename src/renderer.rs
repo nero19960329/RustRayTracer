@@ -37,7 +37,7 @@ pub struct ImageConfig {
 
 #[derive(Deserialize)]
 struct PostProcessingConfig {
-    tone_mapping: String,
+    tone_mapping: Option<String>,
     gamma_correction: bool,
     white_balance: Option<Vec3Config>,
 }
@@ -60,9 +60,13 @@ fn white_balance(color: Vec3, balance: Vec3) -> Vec3 {
 }
 
 fn post_process(color: Vec3, config: &PostProcessingConfig) -> Vec3 {
-    let color = match config.tone_mapping.as_str() {
-        "reinhard" => reinhard_tone_mapping(color),
-        _ => color,
+    if let Some(tone_mapping) = &config.tone_mapping {
+        match tone_mapping.as_str() {
+            "reinhard" => reinhard_tone_mapping(color),
+            _ => color,
+        }
+    } else {
+        color
     };
     let color = if config.gamma_correction {
         gamma_correction(color)
