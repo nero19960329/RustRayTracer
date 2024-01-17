@@ -38,7 +38,7 @@ impl Material for MockMaterial {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Emissive {
     pub color: Vec3,
 }
@@ -57,15 +57,7 @@ impl Material for Emissive {
     }
 }
 
-impl Debug for Emissive {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Emissive")
-            .field("color", &self.color)
-            .finish()
-    }
-}
-
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Lambertian {
     pub albedo: Vec3,
 }
@@ -92,15 +84,7 @@ impl Material for Lambertian {
     }
 }
 
-impl Debug for Lambertian {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Lambertian")
-            .field("albedo", &self.albedo)
-            .finish()
-    }
-}
-
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct PhongSpecular {
     pub specular: Vec3,
     pub shininess: f32,
@@ -142,16 +126,7 @@ impl Material for PhongSpecular {
     }
 }
 
-impl Debug for PhongSpecular {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("PhongSpecular")
-            .field("specular", &self.specular)
-            .field("shininess", &self.shininess)
-            .finish()
-    }
-}
-
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct IdealReflector {}
 
 impl Material for IdealReflector {
@@ -175,13 +150,7 @@ impl Material for IdealReflector {
     }
 }
 
-impl Debug for IdealReflector {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("IdealReflector").finish()
-    }
-}
-
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct IdealDielectric {
     pub ior: f32, // index of refraction
 }
@@ -271,13 +240,5 @@ impl Material for IdealDielectric {
         }
 
         bxdf
-    }
-}
-
-impl Debug for IdealDielectric {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("IdealDielectric")
-            .field("ior", &self.ior)
-            .finish()
     }
 }
