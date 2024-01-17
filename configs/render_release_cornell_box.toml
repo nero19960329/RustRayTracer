@@ -1,6 +1,6 @@
 [image]
-width = 320
-height = 240
+width = 1024
+height = 768
 samples_per_pixel = 16384
 
 [post_processing]

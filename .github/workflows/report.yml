@@ -6,6 +6,7 @@ env:
   IMGUR_CLIENT_ID: ${{ secrets.IMGUR_CLIENT_ID }}
   IMGUR_CLIENT_SECRET: ${{ secrets.IMGUR_CLIENT_SECRET }}
   IMGUR_REFRESH_TOKEN: ${{ secrets.IMGUR_REFRESH_TOKEN }}
+  GITHUB_RUN_NUBMER: ${{ github.run_number }}
 
 on:
   push:
@@ -65,4 +66,6 @@ jobs:
       run: ./ci/gen_report.py --bin target/release/rust-ray-tracer --report-html report.html
 
     - name: Upload Report
-      run: gsutil cp report.html gs://rust-ray-tracer/${{ github.run_number }}/report.html
+      run: |
+        gsutil cp report.html gs://rust-ray-tracer/${{ github.run_number }}/report.html
+        gsutil cp log.txt gs://rust-ray-tracer/${{ github.run_number }}/log.txt
