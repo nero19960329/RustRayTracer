@@ -25,6 +25,19 @@ pub trait Material: Sync + Send + Debug {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct MockMaterial;
+
+impl Material for MockMaterial {
+    fn scatter(&self, _: &Ray, _: Point, _: Vec3) -> Option<ScatterResult> {
+        None
+    }
+
+    fn bxdf(&self, _: &Ray, _: &Ray, _: Point, _: Vec3) -> Vec3 {
+        Vec3::zero()
+    }
+}
+
 #[derive(Clone)]
 pub struct Emissive {
     pub color: Vec3,
