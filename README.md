@@ -7,6 +7,6 @@ A soft ray tracer implemented by Rust.
 
 # Example Scenes
 
-Cornell Box MCPT 320x240 16384spp (No refractive objects)
+Cornell Box MCPT 320x240 16384spp
 
 ![Cornell Box MCPT 320x240 16384spp](https://i.imgur.com/b27Enof.png)
