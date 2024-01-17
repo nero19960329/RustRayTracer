@@ -3,9 +3,11 @@ use super::raytracer::trace;
 use super::scene::Scene;
 use cgmath::ElementWise;
 use image::{ImageBuffer, RgbImage};
+use indicatif::{ProgressBar, ProgressStyle};
 use rand::Rng;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use serde::Deserialize;
+use std::sync::Arc;
 
 #[derive(Deserialize)]
 pub struct RenderConfig {
@@ -74,11 +76,23 @@ pub fn render(config: &RenderConfig, scene: &Scene) -> RgbImage {
         .build_global()
         .unwrap();
 
+    let pixel_count = config.image.width as usize * config.image.height as usize;
+    let progress_bar = Arc::new(ProgressBar::new(pixel_count as u64));
+    progress_bar.set_style(
+        ProgressStyle::default_bar()
+            .template(
+                "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {percent}% ({eta})",
+            )
+            .expect("Failed to set progress bar style")
+            .progress_chars("#>-"),
+    );
+    let pb = progress_bar.clone();
+
     let mut img: RgbImage = ImageBuffer::new(config.image.width, config.image.height);
 
     img.enumerate_pixels_mut()
         .par_bridge()
-        .for_each(|(x, y, pixel)| {
+        .for_each_with(pb, |pb, (x, y, pixel)| {
             let mut rng = rand::thread_rng();
             let mut color = Vec3::new(0.0, 0.0, 0.0);
             for _ in 0..config.image.samples_per_pixel {
@@ -96,7 +110,12 @@ pub fn render(config: &RenderConfig, scene: &Scene) -> RgbImage {
                 (color.y * 255.0).min(255.0) as u8,
                 (color.z * 255.0).min(255.0) as u8,
             ]);
+
+            pb.inc(1);
         });
+    Arc::try_unwrap(progress_bar)
+        .expect("Failed to unwrap progress bar")
+        .finish_with_message("Render complete!");
 
     img
 }
