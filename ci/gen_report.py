@@ -55,7 +55,9 @@ def main(
     subprocess.run(
         [
             str(executable),
-            "--config",
+            "--scene-config",
+            "configs/scene_cornell_box.toml",
+            "--render-config",
             "configs/render_debug_cornell_box.toml",
             "--output",
             "output.png",

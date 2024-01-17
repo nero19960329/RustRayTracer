@@ -1,9 +1,11 @@
-use super::math::{fresnel, reflect, refract, spherical_to_world, Point, Ray, Vec3};
+use super::math::{fresnel, reflect, refract, spherical_to_world, Point, Ray, Vec3, Vec3Config};
 use cgmath::{Array, InnerSpace, Zero};
 use log::warn;
 use rand::Rng;
+use serde::Deserialize;
 use std::f32::consts::{FRAC_1_PI, PI};
 use std::fmt::Debug;
+use std::sync::Arc;
 
 pub struct ScatterResult {
     pub ray: Ray,
@@ -57,6 +59,11 @@ impl Material for Emissive {
     }
 }
 
+#[derive(Deserialize)]
+pub struct EmissiveConfig {
+    pub color: Vec3Config,
+}
+
 #[derive(Debug, Clone)]
 pub struct Lambertian {
     pub albedo: Vec3,
@@ -82,6 +89,11 @@ impl Material for Lambertian {
     fn bxdf(&self, _: &Ray, _: &Ray, _: Point, _: Vec3) -> Vec3 {
         self.albedo * FRAC_1_PI
     }
+}
+
+#[derive(Deserialize)]
+pub struct LambertianConfig {
+    pub albedo: Vec3Config,
 }
 
 #[derive(Debug, Clone)]
@@ -126,8 +138,17 @@ impl Material for PhongSpecular {
     }
 }
 
+#[derive(Deserialize)]
+pub struct PhongSpecularConfig {
+    pub specular: Vec3Config,
+    pub shininess: f32,
+}
+
 #[derive(Debug, Clone)]
 pub struct IdealReflector {}
+
+#[derive(Deserialize)]
+pub struct IdealReflectorConfig {}
 
 impl Material for IdealReflector {
     fn scatter(&self, ray_in: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult> {
@@ -153,6 +174,11 @@ impl Material for IdealReflector {
 #[derive(Debug, Clone)]
 pub struct IdealDielectric {
     pub ior: f32, // index of refraction
+}
+
+#[derive(Deserialize)]
+pub struct IdealDielectricConfig {
+    pub ior: f32,
 }
 
 impl Material for IdealDielectric {
@@ -240,5 +266,36 @@ impl Material for IdealDielectric {
         }
 
         bxdf
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "type")]
+pub enum MaterialConfig {
+    Emissive(EmissiveConfig),
+    Lambertian(LambertianConfig),
+    PhongSpecular(PhongSpecularConfig),
+    IdealReflector(IdealReflectorConfig),
+    IdealDielectric(IdealDielectricConfig),
+}
+
+impl MaterialConfig {
+    pub fn to_material(&self) -> Arc<dyn Material> {
+        match self {
+            MaterialConfig::Emissive(config) => Arc::new(Emissive {
+                color: config.color.to_vec3(),
+            }),
+            MaterialConfig::Lambertian(config) => Arc::new(Lambertian {
+                albedo: config.albedo.to_vec3(),
+            }),
+            MaterialConfig::PhongSpecular(config) => Arc::new(PhongSpecular {
+                specular: config.specular.to_vec3(),
+                shininess: config.shininess,
+            }),
+            MaterialConfig::IdealReflector(_) => Arc::new(IdealReflector {}),
+            MaterialConfig::IdealDielectric(config) => {
+                Arc::new(IdealDielectric { ior: config.ior })
+            }
+        }
     }
 }

@@ -1,7 +1,34 @@
 use cgmath::{ElementWise, InnerSpace, Point3, Vector3};
+use serde::Deserialize;
 
 pub type Vec3 = Vector3<f32>;
 pub type Point = Point3<f32>;
+
+#[derive(Deserialize)]
+pub struct Vec3Config {
+    x: f32,
+    y: f32,
+    z: f32,
+}
+
+impl Vec3Config {
+    pub fn to_vec3(&self) -> Vec3 {
+        Vec3::new(self.x, self.y, self.z)
+    }
+}
+
+#[derive(Deserialize)]
+pub struct PointConfig {
+    x: f32,
+    y: f32,
+    z: f32,
+}
+
+impl PointConfig {
+    pub fn to_point(&self) -> Point {
+        Point::new(self.x, self.y, self.z)
+    }
+}
 
 #[derive(Debug)]
 pub struct Ray {

@@ -1,11 +1,15 @@
-use super::math::{Point, Ray, Vec3};
+use super::math::{Point, PointConfig, Ray, Vec3, Vec3Config};
 use cgmath::InnerSpace;
+use serde::Deserialize;
 use std::f32::consts::PI;
+use std::fmt::Debug;
+use std::sync::Arc;
 
-pub trait Camera: Sync + Send {
+pub trait Camera: Sync + Send + Debug {
     fn create_ray(&self, s: f32, t: f32) -> Ray;
 }
 
+#[derive(Debug)]
 pub struct PerspectiveCamera {
     origin: Point,
     lower_left_corner: Point,
@@ -37,6 +41,35 @@ impl Camera for PerspectiveCamera {
             direction: (self.lower_left_corner + s * self.horizontal + t * self.vertical
                 - self.origin)
                 .normalize(),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct PerspectiveCameraConfig {
+    look_from: PointConfig,
+    look_at: PointConfig,
+    vup: Vec3Config,
+    vfov: f32,
+    aspect: f32,
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "type")]
+pub enum CameraConfig {
+    Perspective(PerspectiveCameraConfig),
+}
+
+impl CameraConfig {
+    pub fn to_camera(&self) -> Arc<dyn Camera> {
+        match self {
+            CameraConfig::Perspective(config) => Arc::new(PerspectiveCamera::new(
+                config.look_from.to_point(),
+                config.look_at.to_point(),
+                config.vup.to_vec3(),
+                config.vfov,
+                config.aspect,
+            )),
         }
     }
 }

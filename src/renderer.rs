@@ -1,5 +1,4 @@
-use super::camera::Camera;
-use super::math::Vec3;
+use super::math::{Vec3, Vec3Config};
 use super::raytracer::trace;
 use super::scene::Scene;
 use cgmath::ElementWise;
@@ -7,19 +6,6 @@ use image::{ImageBuffer, RgbImage};
 use rand::Rng;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use serde::Deserialize;
-
-#[derive(Deserialize)]
-struct Vec3Config {
-    x: f32,
-    y: f32,
-    z: f32,
-}
-
-impl Vec3Config {
-    fn to_vec3(&self) -> Vec3 {
-        Vec3::new(self.x, self.y, self.z)
-    }
-}
 
 #[derive(Deserialize)]
 pub struct RenderConfig {
@@ -81,7 +67,7 @@ fn post_process(color: Vec3, config: &PostProcessingConfig) -> Vec3 {
     color
 }
 
-pub fn render<C: Camera>(config: &RenderConfig, scene: &Scene, camera: &C) -> RgbImage {
+pub fn render(config: &RenderConfig, scene: &Scene) -> RgbImage {
     let parallelism = config.performance.parallelism.unwrap_or(1);
     rayon::ThreadPoolBuilder::new()
         .num_threads(parallelism)
@@ -100,7 +86,7 @@ pub fn render<C: Camera>(config: &RenderConfig, scene: &Scene, camera: &C) -> Rg
                 let v_offset: f32 = rng.gen();
                 let u = (x as f32 + u_offset + 0.5) / config.image.width as f32;
                 let v = 1.0 - (y as f32 + v_offset + 0.5) / config.image.height as f32;
-                let ray = camera.create_ray(u, v);
+                let ray = scene.camera.create_ray(u, v);
                 color += trace(&ray, scene, 0);
             }
             color /= config.image.samples_per_pixel as f32;
