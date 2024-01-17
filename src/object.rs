@@ -1,6 +1,7 @@
-use super::material::Material;
-use super::math::{Point, Ray, Vec3};
+use super::material::{Material, MaterialConfig};
+use super::math::{Point, PointConfig, Ray, Vec3, Vec3Config};
 use cgmath::InnerSpace;
+use serde::Deserialize;
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -10,6 +11,13 @@ pub struct Sphere {
     pub material: Arc<dyn Material>,
 }
 
+#[derive(Deserialize)]
+pub struct SphereConfig {
+    center: PointConfig,
+    radius: f32,
+    material: MaterialConfig,
+}
+
 #[derive(Debug)]
 pub struct Plane {
     pub point: Point,
@@ -17,9 +25,40 @@ pub struct Plane {
     pub material: Arc<dyn Material>,
 }
 
+#[derive(Deserialize)]
+pub struct PlaneConfig {
+    point: PointConfig,
+    normal: Vec3Config,
+    material: MaterialConfig,
+}
+
 pub enum Object {
     Sphere(Sphere),
     Plane(Plane),
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "type")]
+pub enum ObjectConfig {
+    Sphere(SphereConfig),
+    Plane(PlaneConfig),
+}
+
+impl ObjectConfig {
+    pub fn to_object(&self) -> Object {
+        match self {
+            ObjectConfig::Sphere(config) => Object::Sphere(Sphere {
+                center: config.center.to_point(),
+                radius: config.radius,
+                material: config.material.to_material(),
+            }),
+            ObjectConfig::Plane(config) => Object::Plane(Plane {
+                point: config.point.to_point(),
+                normal: config.normal.to_vec3().normalize(),
+                material: config.material.to_material(),
+            }),
+        }
+    }
 }
 
 #[derive(Debug)]
