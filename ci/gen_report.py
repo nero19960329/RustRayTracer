@@ -7,8 +7,9 @@ import subprocess
 import argparse
 import git
 from loguru import logger
-import requests
 from PIL import Image
+import requests
+import toml
 
 
 def upload_to_imgur(
@@ -52,18 +53,32 @@ def main(
         os.remove(artifact)
     if not os.path.exists(executable):
         raise RuntimeError(f"executable {executable} does not exist")
+
+    scene_config_path = "configs/scene_cornell_box.toml"
+    render_config_path = "configs/render_debug_cornell_box.toml"
+    render_config = toml.load(open(render_config_path, "r", encoding="utf-8"))
+    log = open("log.txt", "w", encoding="utf-8")
     subprocess.run(
         [
             str(executable),
             "--scene-config",
-            "configs/scene_cornell_box.toml",
+            scene_config_path,
             "--render-config",
-            "configs/render_debug_cornell_box.toml",
+            render_config_path,
             "--output",
             "output.png",
         ],
+        stdout=log,
+        stderr=log,
+        env={
+            **os.environ,
+            "RUST_BACKTRACE": "1",
+            "RUST_LOG": "info",
+        },
         check=True,
     )
+    log.flush()
+    log.close()
 
     # turn output.png -> output.jpg
     im = Image.open(artifact)
@@ -77,10 +92,14 @@ def main(
     commit_hash = commit.hexsha
     commit_description = commit.message
 
+    width = render_config["image"]["width"]
+    height = render_config["image"]["height"]
+    spp = render_config["image"]["samples_per_pixel"]
+
     resp = upload_to_imgur(
         imgur_access_token=os.environ["IMGUR_ACCESS_TOKEN"],
         imgur_album_id=os.environ["IMGUR_ALBUM_ID"],
-        imgur_title=f"{commit_hash} - cornell_box (320x240, 128spp)",
+        imgur_title=f"{commit_hash} - cornell_box ({width}x{height}, {spp}spp)",
         imgur_description=commit_description,
         imgur_name="cornell_box.jpg",
         imgur_type="jpg",
@@ -90,6 +109,11 @@ def main(
     logger.info(f"uploaded to imgur: {resp.json()['data']['title']}")
 
     # generate static html
+    github_run_number = os.getenv("GITHUB_RUN_NUMBER")
+    if not github_run_number:
+        log_link = "log.txt"
+    else:
+        log_link = f"https://storage.cloud.google.com/rust-ray-tracer/{github_run_number}/log.txt"
     html = f"""
     <html>
         <head>
@@ -101,6 +125,7 @@ def main(
             <p>Commit description: {commit_description}</p>
             <p>Image: <a href="{resp.json()['data']['link']}">{resp.json()['data']['link']}</a></p>
             <img src="{resp.json()['data']['link']}">
+            <p>Log: <a href="{log_link}">log.txt</a></p>
         </body>
     </html>
     """
