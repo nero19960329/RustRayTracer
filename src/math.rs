@@ -3,6 +3,7 @@ use cgmath::{ElementWise, InnerSpace, Point3, Vector3};
 pub type Vec3 = Vector3<f32>;
 pub type Point = Point3<f32>;
 
+#[derive(Debug)]
 pub struct Ray {
     pub origin: Point,
     pub direction: Vec3,
