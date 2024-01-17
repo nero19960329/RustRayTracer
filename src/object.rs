@@ -200,4 +200,59 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_plane_intersect() {
+        let mut rng = rand::thread_rng();
+        for _ in 0..10 {
+            let point = Point::new(
+                rng.gen_range(-10.0..10.0),
+                rng.gen_range(-10.0..10.0),
+                rng.gen_range(-10.0..10.0),
+            );
+            let normal = Vec3::new(
+                rng.gen_range(-1.0..1.0),
+                rng.gen_range(-1.0..1.0),
+                rng.gen_range(-1.0..1.0),
+            )
+            .normalize();
+            let plane = Plane {
+                point: point,
+                normal: normal,
+                material: Arc::new(MockMaterial {}),
+            };
+            let p1 = Ray {
+                origin: point,
+                direction: Vec3::new(
+                    rng.gen_range(-1.0..1.0),
+                    rng.gen_range(-1.0..1.0),
+                    rng.gen_range(-1.0..1.0),
+                )
+                .normalize(),
+            }
+            .at(rng.gen_range(0.0..10.0));
+            let p2 = Ray {
+                origin: point,
+                direction: Vec3::new(
+                    rng.gen_range(-1.0..1.0),
+                    rng.gen_range(-1.0..1.0),
+                    rng.gen_range(-1.0..1.0),
+                )
+                .normalize(),
+            }
+            .at(rng.gen_range(0.0..10.0));
+            let ray = Ray {
+                origin: p1,
+                direction: (p2 - p1).normalize(),
+            };
+            let hit = plane.intersect(&ray, 0.0, 100.0);
+            if hit.is_none() {
+                assert!(hit.is_none());
+            } else {
+                let hit = hit.unwrap();
+                assert_abs_diff_eq!((hit.p - plane.point).dot(normal), 0.0, epsilon = 1e-3);
+                vec3_approx_eq(hit.normal, normal, 1e-3);
+            }
+        }
+    }
 }
