@@ -71,6 +71,7 @@ jobs:
             --output_dir output
             --id ${{ steps.get_version.outputs.tag }}
             --upload
+            --no_compress
 
     - name: Upload Report
       run: |

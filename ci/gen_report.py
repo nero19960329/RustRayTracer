@@ -152,6 +152,7 @@ def main(
     output_dir: Path,
     id: str | None = None,
     upload: bool = False,
+    compress: bool = True,
 ):
     config = yaml.safe_load(open(config, "r", encoding="utf-8"))
     repo = git.Repo()
@@ -199,29 +200,32 @@ def main(
                 )
             task_data.time_costs.append(timer.elapsed())
 
-            jpg_path = output_dir / name / f"{render_config.stem}.jpg"
-            convert_png_to_jpg(
-                png_path=image_path,
-                jpg_path=jpg_path,
-            )
-            os.remove(image_path)
+            if compress:
+                jpg_path = output_dir / name / f"{render_config.stem}.jpg"
+                convert_png_to_jpg(
+                    png_path=image_path,
+                    jpg_path=jpg_path,
+                )
+                if upload:
+                    os.remove(image_path)
+                image_path = jpg_path
 
             if not upload:
-                image_link = str(Path(name) / f"{render_config.stem}.jpg")
+                image_link = str(Path(*image_path.parts[1:]))
             else:
                 resp = upload_to_imgur(
                     imgur_access_token=os.environ["IMGUR_ACCESS_TOKEN"],
                     imgur_album_id=os.environ["IMGUR_ALBUM_ID"],
                     imgur_title=f"{report.commit_hash} - {name} ({render_config.stem})",
                     imgur_description=report.commit_description,
-                    imgur_name=f"{name}.jpg",
-                    imgur_type="jpg",
-                    imgur_file_io=open(jpg_path, "rb"),
+                    imgur_name=f"{name}.{image_path.suffix[1:]}",
+                    imgur_type=image_path.suffix[1:],
+                    imgur_file_io=open(image_path, "rb"),
                 )
                 resp.raise_for_status()
                 image_link = resp.json()["data"]["link"]
+                os.remove(image_path)
             task_data.image_links.append(image_link)
-            os.remove(jpg_path)
 
             render_config_data = toml.load(open(render_config, "r", encoding="utf-8"))
             width = render_config_data["image"]["width"]
@@ -249,6 +253,7 @@ if __name__ == "__main__":
     parser.add_argument("--output_dir", type=str, required=True)
     parser.add_argument("--id", type=str)
     parser.add_argument("--upload", action="store_true")
+    parser.add_argument("--no_compress", action="store_true")
     args = parser.parse_args()
 
     main(
@@ -257,4 +262,5 @@ if __name__ == "__main__":
         output_dir=Path(args.output_dir),
         id=args.id,
         upload=args.upload,
+        compress=not args.no_compress,
     )
