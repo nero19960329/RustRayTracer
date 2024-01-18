@@ -9,9 +9,8 @@ env:
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    tags:
+    - 'v*'
 
 jobs:
   report:
@@ -24,8 +23,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'main' }}
 
     - name: Get tag version
       id: get_version
@@ -68,11 +65,11 @@ jobs:
         args: --release --all-features
 
     - name: Generate Report
-      run: ./ci/gen_report.py \
-            --bin target/release/rust-ray-tracer \
-            --config ./ci/report_configs_tag.yml \
-            --output_dir output \
-            --id ${{ steps.get_version.outputs.tag }} \
+      run: ./ci/gen_report.py
+            --bin target/release/rust-ray-tracer
+            --config ./ci/report_configs_tag.yml
+            --output_dir output
+            --id ${{ steps.get_version.outputs.tag }}
             --upload
 
     - name: Upload Report

@@ -62,11 +62,11 @@ jobs:
         args: --release --all-features
 
     - name: Generate Report
-      run: ./ci/gen_report.py \
-            --bin target/release/rust-ray-tracer \
-            --config ./ci/report_configs_commit.yml \
-            --output_dir output \
-            --id ${{ github.run_number }} \
+      run: ./ci/gen_report.py
+            --bin target/release/rust-ray-tracer
+            --config ./ci/report_configs_commit.yml
+            --output_dir output
+            --id ${{ github.run_number }}
             --upload
 
     - name: Upload Report
