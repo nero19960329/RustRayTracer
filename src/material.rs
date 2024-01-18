@@ -3,17 +3,17 @@ use cgmath::{Array, InnerSpace, Zero};
 use log::warn;
 use rand::Rng;
 use serde::Deserialize;
-use std::f32::consts::{FRAC_1_PI, PI};
+use std::f64::consts::{FRAC_1_PI, PI};
 use std::fmt::Debug;
 use std::sync::Arc;
 
 pub struct ScatterResult {
     pub ray: Ray,
-    pub pdf: f32,
+    pub pdf: f64,
 }
 
 impl ScatterResult {
-    pub fn new(ray: Ray, pdf: f32) -> Self {
+    pub fn new(ray: Ray, pdf: f64) -> Self {
         Self { ray, pdf }
     }
 }
@@ -72,8 +72,8 @@ pub struct Lambertian {
 impl Material for Lambertian {
     fn scatter(&self, _: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult> {
         let mut rng = rand::thread_rng();
-        let u: f32 = rng.gen();
-        let v: f32 = rng.gen();
+        let u: f64 = rng.gen();
+        let v: f64 = rng.gen();
         let theta = (1.0 - u).sqrt().acos();
         let phi = 2.0 * PI * v;
 
@@ -99,15 +99,15 @@ pub struct LambertianConfig {
 #[derive(Debug, Clone)]
 pub struct PhongSpecular {
     pub specular: Vec3,
-    pub shininess: f32,
+    pub shininess: f64,
 }
 
 impl Material for PhongSpecular {
     fn scatter(&self, ray_in: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult> {
         let reflected = reflect(ray_in.direction, normal);
         let mut rng = rand::thread_rng();
-        let u: f32 = rng.gen();
-        let v: f32 = rng.gen();
+        let u: f64 = rng.gen();
+        let v: f64 = rng.gen();
         let theta = u.powf(1.0 / (self.shininess + 1.0)).acos();
         let phi = 2.0 * PI * v;
 
@@ -141,7 +141,7 @@ impl Material for PhongSpecular {
 #[derive(Deserialize)]
 pub struct PhongSpecularConfig {
     pub specular: Vec3Config,
-    pub shininess: f32,
+    pub shininess: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -163,7 +163,7 @@ impl Material for IdealReflector {
     fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, _: Point, normal: Vec3) -> Vec3 {
         let reflected = reflect(ray_in.direction, normal);
         let cos_theta = ray_out.direction.dot(normal);
-        if cos_theta > 1e-3 && (ray_out.direction - reflected).magnitude2() < 1e-3 {
+        if cos_theta > 1e-6 && (ray_out.direction - reflected).magnitude2() < 1e-6 {
             Vec3::new(1.0, 1.0, 1.0) / cos_theta
         } else {
             Vec3::zero()
@@ -173,12 +173,12 @@ impl Material for IdealReflector {
 
 #[derive(Debug, Clone)]
 pub struct IdealDielectric {
-    pub ior: f32, // index of refraction
+    pub ior: f64, // index of refraction
 }
 
 #[derive(Deserialize)]
 pub struct IdealDielectricConfig {
-    pub ior: f32,
+    pub ior: f64,
 }
 
 impl Material for IdealDielectric {
@@ -198,9 +198,9 @@ impl Material for IdealDielectric {
         let unit_direction = ray_in.direction.normalize();
         let cos_theta = (-unit_direction).dot(outward_normal);
         let mut rng = rand::thread_rng();
-        let r: f32 = rng.gen();
+        let r: f64 = rng.gen();
         let reflectance = fresnel(cos_theta, eta_i, eta_t);
-        if reflectance > 1.0 + 1e-3 {
+        if reflectance > 1.0 {
             panic!("reflectance > 1.0");
         }
         if r < reflectance {
@@ -241,7 +241,7 @@ impl Material for IdealDielectric {
 
         let cos_theta_i = ray_in.direction.dot(normal).abs();
         let cos_theta_t = ray_out.direction.dot(normal).abs();
-        if cos_theta_t < 1e-3 {
+        if cos_theta_t < 1e-6 {
             return Vec3::zero();
         }
 
@@ -252,9 +252,9 @@ impl Material for IdealDielectric {
         let refract_dir = refract(ray_in.direction, outward_normal, eta).unwrap_or(Vec3::zero());
 
         let mut bxdf = Vec3::zero();
-        if (reflect_dir - ray_out.direction).magnitude2() < 1e-3 {
+        if (reflect_dir - ray_out.direction).magnitude2() < 1e-6 {
             bxdf = Vec3::new(1.0, 1.0, 1.0) * reflectance / cos_theta_t;
-        } else if (refract_dir - ray_out.direction).magnitude2() < 1e-3 {
+        } else if (refract_dir - ray_out.direction).magnitude2() < 1e-6 {
             bxdf = Vec3::new(1.0, 1.0, 1.0) * transmittance / (cos_theta_t * eta * eta);
         }
 
