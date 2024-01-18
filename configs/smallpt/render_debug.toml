@@ -1,11 +1,11 @@
 [image]
 width = 320
 height = 240
-samples_per_pixel = 128
+samples_per_pixel = 4
 
 [post_processing]
 tone_mapping = "reinhard"
 gamma_correction = true
 
 [performance]
-parallelism = 0
+parallelism = 1

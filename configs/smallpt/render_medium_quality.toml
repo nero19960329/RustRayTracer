@@ -1,0 +1,11 @@
+[image]
+width = 1024
+height = 768
+samples_per_pixel = 1024
+
+[post_processing]
+tone_mapping = "reinhard"
+gamma_correction = true
+
+[performance]
+parallelism = 0
