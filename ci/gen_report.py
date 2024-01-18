@@ -108,11 +108,11 @@ class Report:
 
     tasks: list[Task]
 
-    github_run_number: str | None = None
+    id: str | None = None
 
     def html(self):
         title = (
-            f"Report - {self.github_run_number}" if self.github_run_number else "Report"
+            f"Report - {self.id}" if self.id else "Report"
         )
 
         tasks_html = ""
@@ -152,6 +152,7 @@ def main(
     executable: Path,
     config: Path,
     output_dir: Path,
+    id: str | None = None,
     upload: bool = False,
 ):
     config = yaml.safe_load(open(config, "r", encoding="utf-8"))
@@ -160,7 +161,7 @@ def main(
         commit_hash=repo.head.commit.hexsha,
         commit_description=repo.head.commit.message,
         tasks=[],
-        github_run_number=os.getenv("GITHUB_RUN_NUMBER"),
+        id=id,
     )
 
     for task in config["tasks"]:
@@ -234,8 +235,8 @@ def main(
             if not upload:
                 log_link = str(Path(name) / f"{render_config.stem}.log")
             else:
-                assert report.github_run_number is not None, "github_run_number is None"
-                log_link = f"https://storage.cloud.google.com/rust-ray-tracer/{report.github_run_number}/{name}/{log_path.name}"
+                assert report.id is not None, "id is None"
+                log_link = f"https://storage.cloud.google.com/rust-ray-tracer/{report.id}/{name}/{log_path.name}"
             task_data.log_links.append(log_link)
 
     with open(output_dir / "report.html", "w", encoding="utf-8") as f:
@@ -248,6 +249,7 @@ if __name__ == "__main__":
     parser.add_argument("--bin", type=str, required=True)
     parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--output_dir", type=str, required=True)
+    parser.add_argument("--id", type=str)
     parser.add_argument("--upload", action="store_true")
     args = parser.parse_args()
 
@@ -255,5 +257,6 @@ if __name__ == "__main__":
         executable=Path(args.bin),
         config=Path(args.config),
         output_dir=Path(args.output_dir),
+        id=args.id,
         upload=args.upload,
     )

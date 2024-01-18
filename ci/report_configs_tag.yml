@@ -4,4 +4,4 @@ tasks:
   render_configs:
   - "configs/smallpt/render_low_quality.toml"
   - "configs/smallpt/render_medium_quality.toml"
-  - "configs/smallpt/render_high_quality.toml"
+  # - "configs/smallpt/render_high_quality.toml"
