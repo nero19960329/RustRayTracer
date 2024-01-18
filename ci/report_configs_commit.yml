@@ -1,0 +1,5 @@
+tasks:
+- name: "smallpt"
+  scene_config: "configs/smallpt/scene.toml"
+  render_configs:
+  - "configs/smallpt/render_low_quality.toml"

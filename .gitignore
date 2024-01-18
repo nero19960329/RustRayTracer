@@ -178,3 +178,6 @@ cython_debug/
 # Ignore rendered images
 *.png
 *.jpg
+
+# Ignore CI output
+output

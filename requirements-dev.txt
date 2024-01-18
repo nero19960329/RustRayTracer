@@ -5,3 +5,4 @@ pillow
 pynacl
 requests
 toml
+pyyaml

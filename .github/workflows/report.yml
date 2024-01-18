@@ -63,9 +63,8 @@ jobs:
         args: --release --all-features
 
     - name: Generate Report
-      run: ./ci/gen_report.py --bin target/release/rust-ray-tracer --report-html report.html
+      run: ./ci/gen_report.py --bin target/release/rust-ray-tracer --config ./ci/report_configs_commit.yml --output_dir output --upload
 
     - name: Upload Report
       run: |
-        gsutil cp report.html gs://rust-ray-tracer/${{ github.run_number }}/report.html
-        gsutil cp log.txt gs://rust-ray-tracer/${{ github.run_number }}/log.txt
+        gsutil cp -r output/* gs://rust-ray-tracer/${{ github.run_number }}/
