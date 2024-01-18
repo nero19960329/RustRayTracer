@@ -1,4 +1,4 @@
-name: Report
+name: Gallery
 
 env:
   IMGUR_ACCESS_TOKEN: ${{ secrets.IMGUR_ACCESS_TOKEN }}
@@ -9,9 +9,8 @@ env:
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    tags:
+    - 'v*'
 
 jobs:
   report:
@@ -19,13 +18,17 @@ jobs:
       id-token: write
       contents: read
 
-    name: Report
+    name: Gallery
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'main' }}
+
+    - name: Get tag version
+      id: get_version
+      run: |
+        echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/tags/})"
+      shell: bash
 
     - name: Google Cloud Auth
       uses: google-github-actions/auth@v2
@@ -64,11 +67,11 @@ jobs:
     - name: Generate Report
       run: ./ci/gen_report.py
             --bin target/release/rust-ray-tracer
-            --config ./ci/report_configs_commit.yml
+            --config ./ci/report_configs_tag.yml
             --output_dir output
-            --id ${{ github.run_number }}
+            --id ${{ steps.get_version.outputs.tag }}
             --upload
 
     - name: Upload Report
       run: |
-        gsutil cp -r output/* gs://rust-ray-tracer/${{ github.run_number }}/
+        gsutil cp -r output/* gs://rust-ray-tracer/gallery/${{ steps.get_version.outputs.tag }}/
