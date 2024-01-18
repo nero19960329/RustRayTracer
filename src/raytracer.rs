@@ -5,7 +5,7 @@ use log::warn;
 use rand::Rng;
 
 const MIN_DEPTH: u32 = 3;
-const RUSSIAN_ROULETTE_PROB: f32 = 0.8;
+const RUSSIAN_ROULETTE_PROB: f64 = 0.8;
 
 pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3 {
     let mut color = Vec3::zero();
@@ -19,7 +19,7 @@ pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3 {
         }
     };
 
-    if rng.gen::<f32>() > p {
+    if rng.gen::<f64>() > p {
         return color;
     }
 
@@ -37,7 +37,7 @@ pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3 {
     }
 
     let scatter_result = scatter_result.unwrap();
-    if scatter_result.pdf <= 1e-3 {
+    if scatter_result.pdf <= 1e-6 {
         return color;
     }
     let cos_theta = scatter_result.ray.direction.dot(hit.normal).abs();

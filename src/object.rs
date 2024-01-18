@@ -7,14 +7,14 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub struct Sphere {
     pub center: Point,
-    pub radius: f32,
+    pub radius: f64,
     pub material: Arc<dyn Material>,
 }
 
 #[derive(Deserialize)]
 pub struct SphereConfig {
     center: PointConfig,
-    radius: f32,
+    radius: f64,
     material: MaterialConfig,
 }
 
@@ -63,7 +63,7 @@ impl ObjectConfig {
 
 #[derive(Debug)]
 pub struct HitRecord {
-    pub t: f32,
+    pub t: f64,
     pub p: Point,
     pub normal: Vec3,
     pub material: Arc<dyn Material>,
@@ -71,7 +71,7 @@ pub struct HitRecord {
 
 impl Sphere {
     #[allow(dead_code)]
-    fn intersect_analytic(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    fn intersect_analytic(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = ray.origin - self.center;
         let a = ray.direction.magnitude2();
         let half_b = oc.dot(ray.direction);
@@ -102,7 +102,7 @@ impl Sphere {
         })
     }
 
-    fn intersect_geometric(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    fn intersect_geometric(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let l = self.center - ray.origin;
         let t_ca = l.dot(ray.direction);
 
@@ -141,13 +141,13 @@ impl Sphere {
         })
     }
 
-    pub fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    pub fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         return self.intersect_geometric(ray, t_min, t_max);
     }
 }
 
 impl Plane {
-    pub fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    pub fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let denominator = self.normal.dot(ray.direction);
         if denominator.abs() < 1e-6 {
             return None;
@@ -169,7 +169,7 @@ impl Plane {
 }
 
 impl Object {
-    pub fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    pub fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         match *self {
             Object::Sphere(ref sphere) => sphere.intersect(ray, t_min, t_max),
             Object::Plane(ref plane) => plane.intersect(ray, t_min, t_max),
@@ -233,9 +233,9 @@ mod tests {
             } else {
                 let hit_analytic = hit_analytic.unwrap();
                 let hit_geometric = hit_geometric.unwrap();
-                assert_abs_diff_eq!(hit_analytic.t, hit_geometric.t, epsilon = 1e-3);
-                point_approx_eq(hit_analytic.p, hit_geometric.p, 1e-3);
-                vec3_approx_eq(hit_analytic.normal, hit_geometric.normal, 1e-3);
+                assert_abs_diff_eq!(hit_analytic.t, hit_geometric.t, epsilon = 1e-6);
+                point_approx_eq(hit_analytic.p, hit_geometric.p, 1e-6);
+                vec3_approx_eq(hit_analytic.normal, hit_geometric.normal, 1e-6);
             }
         }
     }
@@ -289,8 +289,8 @@ mod tests {
                 assert!(hit.is_none());
             } else {
                 let hit = hit.unwrap();
-                assert_abs_diff_eq!((hit.p - plane.point).dot(normal), 0.0, epsilon = 1e-3);
-                vec3_approx_eq(hit.normal, normal, 1e-3);
+                assert_abs_diff_eq!((hit.p - plane.point).dot(normal), 0.0, epsilon = 1e-6);
+                vec3_approx_eq(hit.normal, normal, 1e-6);
             }
         }
     }

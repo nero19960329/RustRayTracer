@@ -1,12 +1,12 @@
 use super::math::{Point, PointConfig, Ray, Vec3, Vec3Config};
 use cgmath::InnerSpace;
 use serde::Deserialize;
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 use std::fmt::Debug;
 use std::sync::Arc;
 
 pub trait Camera: Sync + Send + Debug {
-    fn create_ray(&self, s: f32, t: f32) -> Ray;
+    fn create_ray(&self, s: f64, t: f64) -> Ray;
 }
 
 #[derive(Debug)]
@@ -18,7 +18,7 @@ pub struct PerspectiveCamera {
 }
 
 impl PerspectiveCamera {
-    pub fn new(look_from: Point, look_at: Point, vup: Vec3, vfov: f32, aspect: f32) -> Self {
+    pub fn new(look_from: Point, look_at: Point, vup: Vec3, vfov: f64, aspect: f64) -> Self {
         let theta = vfov * PI / 180.0;
         let half_height = (theta / 2.0).tan();
         let half_width = aspect * half_height;
@@ -35,7 +35,7 @@ impl PerspectiveCamera {
 }
 
 impl Camera for PerspectiveCamera {
-    fn create_ray(&self, s: f32, t: f32) -> Ray {
+    fn create_ray(&self, s: f64, t: f64) -> Ray {
         Ray {
             origin: self.origin,
             direction: (self.lower_left_corner + s * self.horizontal + t * self.vertical
@@ -50,8 +50,8 @@ pub struct PerspectiveCameraConfig {
     look_from: PointConfig,
     look_at: PointConfig,
     vup: Vec3Config,
-    vfov: f32,
-    aspect: f32,
+    vfov: f64,
+    aspect: f64,
 }
 
 #[derive(Deserialize)]

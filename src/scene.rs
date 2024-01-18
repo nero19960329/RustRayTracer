@@ -33,7 +33,7 @@ impl Scene {
 
     pub fn intersect(&self, ray: &Ray) -> Option<HitRecord> {
         let mut hit_record: Option<HitRecord> = None;
-        let mut closest_so_far = f32::MAX;
+        let mut closest_so_far = f64::MAX;
 
         for object in &self.objects {
             if let Some(temp_rec) = object.intersect(&ray, 0.001, closest_so_far) {

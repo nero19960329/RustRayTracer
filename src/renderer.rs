@@ -96,14 +96,14 @@ pub fn render(config: &RenderConfig, scene: &Scene) -> RgbImage {
             let mut rng = rand::thread_rng();
             let mut color = Vec3::new(0.0, 0.0, 0.0);
             for _ in 0..config.image.samples_per_pixel {
-                let u_offset: f32 = rng.gen();
-                let v_offset: f32 = rng.gen();
-                let u = (x as f32 + u_offset + 0.5) / config.image.width as f32;
-                let v = 1.0 - (y as f32 + v_offset + 0.5) / config.image.height as f32;
+                let u_offset: f64 = rng.gen();
+                let v_offset: f64 = rng.gen();
+                let u = (x as f64 + u_offset + 0.5) / config.image.width as f64;
+                let v = 1.0 - (y as f64 + v_offset + 0.5) / config.image.height as f64;
                 let ray = scene.camera.create_ray(u, v);
                 color += trace(&ray, scene, 0);
             }
-            color /= config.image.samples_per_pixel as f32;
+            color /= config.image.samples_per_pixel as f64;
             color = post_process(color, &config.post_processing);
             *pixel = image::Rgb([
                 (color.x * 255.0).min(255.0) as u8,

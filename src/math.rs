@@ -1,14 +1,14 @@
 use cgmath::{ElementWise, InnerSpace, Point3, Vector3};
 use serde::Deserialize;
 
-pub type Vec3 = Vector3<f32>;
-pub type Point = Point3<f32>;
+pub type Vec3 = Vector3<f64>;
+pub type Point = Point3<f64>;
 
 #[derive(Deserialize)]
 pub struct Vec3Config {
-    x: f32,
-    y: f32,
-    z: f32,
+    x: f64,
+    y: f64,
+    z: f64,
 }
 
 impl Vec3Config {
@@ -19,9 +19,9 @@ impl Vec3Config {
 
 #[derive(Deserialize)]
 pub struct PointConfig {
-    x: f32,
-    y: f32,
-    z: f32,
+    x: f64,
+    y: f64,
+    z: f64,
 }
 
 impl PointConfig {
@@ -37,7 +37,7 @@ pub struct Ray {
 }
 
 impl Ray {
-    pub fn at(&self, t: f32) -> Point {
+    pub fn at(&self, t: f64) -> Point {
         self.origin + t * self.direction
     }
 }
@@ -46,7 +46,7 @@ pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
     v - n * 2.0 * v.dot(n)
 }
 
-pub fn refract(v: Vec3, n: Vec3, eta: f32) -> Option<Vec3> {
+pub fn refract(v: Vec3, n: Vec3, eta: f64) -> Option<Vec3> {
     let cos_theta1 = (-v).dot(n);
     let sin2_theta1 = 1.0 - cos_theta1 * cos_theta1;
     let sin2_theta2 = sin2_theta1 * eta * eta;
@@ -57,7 +57,7 @@ pub fn refract(v: Vec3, n: Vec3, eta: f32) -> Option<Vec3> {
     Some(eta * v + (eta * cos_theta1 - cos_theta2) * n)
 }
 
-pub fn fresnel(cos_i: f32, eta_i: f32, eta_t: f32) -> f32 {
+pub fn fresnel(cos_i: f64, eta_i: f64, eta_t: f64) -> f64 {
     // eta_i is the index of refraction of the medium the ray is coming from
     // eta_t is the index of refraction of the medium the ray is entering
     let sin2_t = (eta_i / eta_t) * (eta_i / eta_t) * (1.0 - cos_i * cos_i);
@@ -83,7 +83,7 @@ fn local_coordinate_system(normal: Vec3) -> (Vec3, Vec3, Vec3) {
     (u, v, w)
 }
 
-pub fn spherical_to_world(theta: f32, phi: f32, normal: Vec3) -> Vec3 {
+pub fn spherical_to_world(theta: f64, phi: f64, normal: Vec3) -> Vec3 {
     let (u, v, w) = local_coordinate_system(normal);
     u.mul_element_wise(theta.sin() * phi.cos())
         + v.mul_element_wise(theta.sin() * phi.sin())
@@ -91,12 +91,12 @@ pub fn spherical_to_world(theta: f32, phi: f32, normal: Vec3) -> Vec3 {
 }
 
 #[cfg(test)]
-pub fn vec3_approx_eq(v1: Vec3, v2: Vec3, epsilon: f32) -> bool {
+pub fn vec3_approx_eq(v1: Vec3, v2: Vec3, epsilon: f64) -> bool {
     (v1 - v2).magnitude() < epsilon
 }
 
 #[cfg(test)]
-pub fn point_approx_eq(p1: Point, p2: Point, epsilon: f32) -> bool {
+pub fn point_approx_eq(p1: Point, p2: Point, epsilon: f64) -> bool {
     (p1 - p2).magnitude() < epsilon
 }
 
@@ -105,7 +105,7 @@ mod tests {
     use super::*;
     use approx::assert_abs_diff_eq;
     use rand::Rng;
-    use std::f32::consts::PI;
+    use std::f64::consts::PI;
 
     #[test]
     fn test_ray_at() {
