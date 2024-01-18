@@ -45,9 +45,9 @@ A soft ray tracer implemented by Rust.
 
 # Example Scenes
 
-smallpt scene MCPT 320x240 16384spp
+smallpt scene MCPT 1024x768 16384spp
 
-![smallpt scene MCPT 320x240 16384spp](https://i.imgur.com/gGxFOkM.png)
+![smallpt scene MCPT 1024x768 16384spp](https://i.imgur.com/gGxFOkM.png)
 
 # Gallery
 
