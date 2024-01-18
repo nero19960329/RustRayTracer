@@ -70,11 +70,11 @@ jobs:
     - name: Generate Report
       run: ./ci/gen_report.py \
             --bin target/release/rust-ray-tracer \
-            --config ./ci/report_configs_commit.yml \
+            --config ./ci/report_configs_tag.yml \
             --output_dir output \
             --id ${{ steps.get_version.outputs.tag }} \
             --upload
 
     - name: Upload Report
       run: |
-        gsutil cp -r output/* gs://rust-ray-tracer/${{ steps.get_version.outputs.tag }}/
+        gsutil cp -r output/* gs://rust-ray-tracer/gallery/${{ steps.get_version.outputs.tag }}/
