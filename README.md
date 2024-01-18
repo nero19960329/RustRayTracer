@@ -51,4 +51,4 @@ Cornell Box MCPT 320x240 16384spp
 
 # Gallery
 
-https://storage.cloud.google.com/rust-ray-tracer/gallery/v0.1.0/report.html
+https://storage.cloud.google.com/rust-ray-tracer/gallery/v0.1.1/report.html
