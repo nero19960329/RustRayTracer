@@ -1,4 +1,6 @@
-use super::math::{fresnel, reflect, refract, spherical_to_world, Point, Ray, Vec3, Vec3Config};
+use super::math::{
+    fresnel, reflect, refract, spherical_to_world, Point3D, Ray, Vec3D, Vec3DConfig,
+};
 use cgmath::{Array, InnerSpace, Zero};
 use log::warn;
 use rand::Rng;
@@ -19,11 +21,11 @@ impl ScatterResult {
 }
 
 pub trait Material: Sync + Send + Debug {
-    fn scatter(&self, ray_in: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult>;
+    fn scatter(&self, ray_in: &Ray, hit_point: Point3D, normal: Vec3D) -> Option<ScatterResult>;
 
-    fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, hit_point: Point, normal: Vec3) -> Vec3;
-    fn emission(&self) -> Vec3 {
-        Vec3::zero()
+    fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, hit_point: Point3D, normal: Vec3D) -> Vec3D;
+    fn emission(&self) -> Vec3D {
+        Vec3D::zero()
     }
 }
 
@@ -31,46 +33,46 @@ pub trait Material: Sync + Send + Debug {
 pub struct MockMaterial;
 
 impl Material for MockMaterial {
-    fn scatter(&self, _: &Ray, _: Point, _: Vec3) -> Option<ScatterResult> {
+    fn scatter(&self, _: &Ray, _: Point3D, _: Vec3D) -> Option<ScatterResult> {
         None
     }
 
-    fn bxdf(&self, _: &Ray, _: &Ray, _: Point, _: Vec3) -> Vec3 {
-        Vec3::zero()
+    fn bxdf(&self, _: &Ray, _: &Ray, _: Point3D, _: Vec3D) -> Vec3D {
+        Vec3D::zero()
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct Emissive {
-    pub color: Vec3,
+    pub color: Vec3D,
 }
 
 impl Material for Emissive {
-    fn scatter(&self, _: &Ray, _: Point, _: Vec3) -> Option<ScatterResult> {
+    fn scatter(&self, _: &Ray, _: Point3D, _: Vec3D) -> Option<ScatterResult> {
         None
     }
 
-    fn bxdf(&self, _: &Ray, _: &Ray, _: Point, _: Vec3) -> Vec3 {
-        Vec3::zero()
+    fn bxdf(&self, _: &Ray, _: &Ray, _: Point3D, _: Vec3D) -> Vec3D {
+        Vec3D::zero()
     }
 
-    fn emission(&self) -> Vec3 {
+    fn emission(&self) -> Vec3D {
         self.color
     }
 }
 
 #[derive(Deserialize)]
 pub struct EmissiveConfig {
-    pub color: Vec3Config,
+    pub color: Vec3DConfig,
 }
 
 #[derive(Debug, Clone)]
 pub struct Lambertian {
-    pub albedo: Vec3,
+    pub albedo: Vec3D,
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult> {
+    fn scatter(&self, _: &Ray, hit_point: Point3D, normal: Vec3D) -> Option<ScatterResult> {
         let mut rng = rand::thread_rng();
         let u: f64 = rng.gen();
         let v: f64 = rng.gen();
@@ -86,24 +88,24 @@ impl Material for Lambertian {
         Some(ScatterResult::new(new_ray, pdf))
     }
 
-    fn bxdf(&self, _: &Ray, _: &Ray, _: Point, _: Vec3) -> Vec3 {
+    fn bxdf(&self, _: &Ray, _: &Ray, _: Point3D, _: Vec3D) -> Vec3D {
         self.albedo * FRAC_1_PI
     }
 }
 
 #[derive(Deserialize)]
 pub struct LambertianConfig {
-    pub albedo: Vec3Config,
+    pub albedo: Vec3DConfig,
 }
 
 #[derive(Debug, Clone)]
 pub struct PhongSpecular {
-    pub specular: Vec3,
+    pub specular: Vec3D,
     pub shininess: f64,
 }
 
 impl Material for PhongSpecular {
-    fn scatter(&self, ray_in: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult> {
+    fn scatter(&self, ray_in: &Ray, hit_point: Point3D, normal: Vec3D) -> Option<ScatterResult> {
         let reflected = reflect(ray_in.direction, normal);
         let mut rng = rand::thread_rng();
         let u: f64 = rng.gen();
@@ -123,11 +125,11 @@ impl Material for PhongSpecular {
         Some(ScatterResult::new(new_ray, pdf))
     }
 
-    fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, _: Point, normal: Vec3) -> Vec3 {
+    fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, _: Point3D, normal: Vec3D) -> Vec3D {
         let reflected = reflect(ray_in.direction, normal);
         let cos_theta = reflected.dot(ray_out.direction);
         if cos_theta < 0.0 {
-            Vec3::zero()
+            Vec3D::zero()
         } else {
             self.specular
                 * (self.shininess + 2.0)
@@ -140,7 +142,7 @@ impl Material for PhongSpecular {
 
 #[derive(Deserialize)]
 pub struct PhongSpecularConfig {
-    pub specular: Vec3Config,
+    pub specular: Vec3DConfig,
     pub shininess: f64,
 }
 
@@ -151,7 +153,7 @@ pub struct IdealReflector {}
 pub struct IdealReflectorConfig {}
 
 impl Material for IdealReflector {
-    fn scatter(&self, ray_in: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult> {
+    fn scatter(&self, ray_in: &Ray, hit_point: Point3D, normal: Vec3D) -> Option<ScatterResult> {
         let reflected = reflect(ray_in.direction, normal);
         let new_ray = Ray {
             origin: hit_point,
@@ -160,13 +162,13 @@ impl Material for IdealReflector {
         Some(ScatterResult::new(new_ray, 1.0))
     }
 
-    fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, _: Point, normal: Vec3) -> Vec3 {
+    fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, _: Point3D, normal: Vec3D) -> Vec3D {
         let reflected = reflect(ray_in.direction, normal);
         let cos_theta = ray_out.direction.dot(normal);
         if cos_theta > 1e-6 && (ray_out.direction - reflected).magnitude2() < 1e-6 {
-            Vec3::new(1.0, 1.0, 1.0) / cos_theta
+            Vec3D::new(1.0, 1.0, 1.0) / cos_theta
         } else {
-            Vec3::zero()
+            Vec3D::zero()
         }
     }
 }
@@ -182,7 +184,7 @@ pub struct IdealDielectricConfig {
 }
 
 impl Material for IdealDielectric {
-    fn scatter(&self, ray_in: &Ray, hit_point: Point, normal: Vec3) -> Option<ScatterResult> {
+    fn scatter(&self, ray_in: &Ray, hit_point: Point3D, normal: Vec3D) -> Option<ScatterResult> {
         let mut outward_normal = normal; // normal pointing out of the surface
 
         // check if ray is inside the object
@@ -226,7 +228,7 @@ impl Material for IdealDielectric {
         }
     }
 
-    fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, _: Point, normal: Vec3) -> Vec3 {
+    fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, _: Point3D, normal: Vec3D) -> Vec3D {
         let mut outward_normal = normal; // normal pointing out of the surface
 
         // check if ray is inside the object
@@ -242,20 +244,20 @@ impl Material for IdealDielectric {
         let cos_theta_i = ray_in.direction.dot(normal).abs();
         let cos_theta_t = ray_out.direction.dot(normal).abs();
         if cos_theta_t < 1e-6 {
-            return Vec3::zero();
+            return Vec3D::zero();
         }
 
         let reflectance = fresnel(cos_theta_i, eta_i, eta_t);
         let transmittance = 1.0 - reflectance;
 
         let reflect_dir = reflect(ray_in.direction, outward_normal);
-        let refract_dir = refract(ray_in.direction, outward_normal, eta).unwrap_or(Vec3::zero());
+        let refract_dir = refract(ray_in.direction, outward_normal, eta).unwrap_or(Vec3D::zero());
 
-        let mut bxdf = Vec3::zero();
+        let mut bxdf = Vec3D::zero();
         if (reflect_dir - ray_out.direction).magnitude2() < 1e-6 {
-            bxdf = Vec3::new(1.0, 1.0, 1.0) * reflectance / cos_theta_t;
+            bxdf = Vec3D::new(1.0, 1.0, 1.0) * reflectance / cos_theta_t;
         } else if (refract_dir - ray_out.direction).magnitude2() < 1e-6 {
-            bxdf = Vec3::new(1.0, 1.0, 1.0) * transmittance / (cos_theta_t * eta * eta);
+            bxdf = Vec3D::new(1.0, 1.0, 1.0) * transmittance / (cos_theta_t * eta * eta);
         }
 
         if !bxdf.is_finite() {

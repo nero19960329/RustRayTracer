@@ -1,4 +1,4 @@
-use super::math::{Point, PointConfig, Ray, Vec3, Vec3Config};
+use super::math::{Point3D, Point3DConfig, Ray, Vec3D, Vec3DConfig};
 use cgmath::InnerSpace;
 use serde::Deserialize;
 use std::f64::consts::PI;
@@ -11,14 +11,14 @@ pub trait Camera: Sync + Send + Debug {
 
 #[derive(Debug)]
 pub struct PerspectiveCamera {
-    origin: Point,
-    lower_left_corner: Point,
-    horizontal: Vec3,
-    vertical: Vec3,
+    origin: Point3D,
+    lower_left_corner: Point3D,
+    horizontal: Vec3D,
+    vertical: Vec3D,
 }
 
 impl PerspectiveCamera {
-    pub fn new(look_from: Point, look_at: Point, vup: Vec3, vfov: f64, aspect: f64) -> Self {
+    pub fn new(look_from: Point3D, look_at: Point3D, vup: Vec3D, vfov: f64, aspect: f64) -> Self {
         let theta = vfov * PI / 180.0;
         let half_height = (theta / 2.0).tan();
         let half_width = aspect * half_height;
@@ -47,9 +47,9 @@ impl Camera for PerspectiveCamera {
 
 #[derive(Deserialize)]
 pub struct PerspectiveCameraConfig {
-    look_from: PointConfig,
-    look_at: PointConfig,
-    vup: Vec3Config,
+    look_from: Point3DConfig,
+    look_at: Point3DConfig,
+    vup: Vec3DConfig,
     vfov: f64,
     aspect: f64,
 }
@@ -82,17 +82,21 @@ mod tests {
     #[test]
     fn test_perspective_camera() {
         let camera = PerspectiveCamera::new(
-            Point::new(0.0, 0.0, 0.0),
-            Point::new(0.0, 0.0, -1.0),
-            Vec3::new(0.0, 1.0, 0.0),
+            Point3D::new(0.0, 0.0, 0.0),
+            Point3D::new(0.0, 0.0, -1.0),
+            Vec3D::new(0.0, 1.0, 0.0),
             90.0,
             2.0,
         );
         let ray = camera.create_ray(0.5, 0.5);
-        assert!(point_approx_eq(ray.origin, Point::new(0.0, 0.0, 0.0), 1e-6));
+        assert!(point_approx_eq(
+            ray.origin,
+            Point3D::new(0.0, 0.0, 0.0),
+            1e-6
+        ));
         assert!(vec3_approx_eq(
             ray.direction,
-            Vec3::new(0.0, 0.0, -1.0),
+            Vec3D::new(0.0, 0.0, -1.0),
             1e-6
         ));
     }

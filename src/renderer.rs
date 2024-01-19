@@ -1,4 +1,4 @@
-use super::math::{Vec3, Vec3Config};
+use super::math::{Vec3D, Vec3DConfig};
 use super::raytracer::trace;
 use super::scene::Scene;
 use cgmath::ElementWise;
@@ -27,7 +27,7 @@ pub struct ImageConfig {
 struct PostProcessingConfig {
     tone_mapping: Option<String>,
     gamma_correction: bool,
-    white_balance: Option<Vec3Config>,
+    white_balance: Option<Vec3DConfig>,
 }
 
 #[derive(Deserialize)]
@@ -35,19 +35,19 @@ struct PerformanceConfig {
     parallelism: Option<usize>,
 }
 
-fn reinhard_tone_mapping(color: Vec3) -> Vec3 {
-    color.div_element_wise(color + Vec3::new(1.0, 1.0, 1.0))
+fn reinhard_tone_mapping(color: Vec3D) -> Vec3D {
+    color.div_element_wise(color + Vec3D::new(1.0, 1.0, 1.0))
 }
 
-fn gamma_correction(color: Vec3) -> Vec3 {
+fn gamma_correction(color: Vec3D) -> Vec3D {
     color.map(|c| c.powf(1.0 / 2.2))
 }
 
-fn white_balance(color: Vec3, balance: Vec3) -> Vec3 {
+fn white_balance(color: Vec3D, balance: Vec3D) -> Vec3D {
     color.mul_element_wise(balance)
 }
 
-fn post_process(color: Vec3, config: &PostProcessingConfig) -> Vec3 {
+fn post_process(color: Vec3D, config: &PostProcessingConfig) -> Vec3D {
     if let Some(tone_mapping) = &config.tone_mapping {
         match tone_mapping.as_str() {
             "reinhard" => reinhard_tone_mapping(color),
@@ -110,7 +110,7 @@ pub fn render(config: &RenderConfig, scene: &Scene) -> RgbImage {
             let mut rng = rand::thread_rng();
             for y in y_start..y_end {
                 for x in x_start..x_end {
-                    let mut color = Vec3::new(0.0, 0.0, 0.0);
+                    let mut color = Vec3D::new(0.0, 0.0, 0.0);
                     for _ in 0..config.image.samples_per_pixel {
                         let u_offset: f64 = rng.gen();
                         let v_offset: f64 = rng.gen();

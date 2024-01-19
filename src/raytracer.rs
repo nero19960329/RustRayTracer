@@ -1,4 +1,4 @@
-use super::math::{Ray, Vec3};
+use super::math::{Ray, Vec3D};
 use super::scene::Scene;
 use cgmath::{Array, ElementWise, InnerSpace, Zero};
 use log::warn;
@@ -7,8 +7,8 @@ use rand::Rng;
 const MIN_DEPTH: u32 = 3;
 const RUSSIAN_ROULETTE_PROB: f64 = 0.8;
 
-pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3 {
-    let mut color = Vec3::zero();
+pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3D {
+    let mut color = Vec3D::zero();
     let mut rng = rand::thread_rng();
 
     let p = {
