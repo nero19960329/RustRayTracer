@@ -5,9 +5,9 @@ use cgmath::ElementWise;
 use image::{ImageBuffer, RgbImage};
 use indicatif::{ProgressBar, ProgressStyle};
 use rand::Rng;
-use rayon::iter::{ParallelBridge, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::Deserialize;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 #[derive(Deserialize)]
 pub struct RenderConfig {
@@ -88,34 +88,57 @@ pub fn render(config: &RenderConfig, scene: &Scene) -> RgbImage {
     );
     let pb = progress_bar.clone();
 
-    let mut img: RgbImage = ImageBuffer::new(config.image.width, config.image.height);
+    let tile_size = 16;
+    let tiles_x = (config.image.width as usize + tile_size - 1) / tile_size;
+    let tiles_y = (config.image.height as usize + tile_size - 1) / tile_size;
+    let tile_count = tiles_x * tiles_y;
+    let img = Arc::new(Mutex::new(ImageBuffer::new(
+        config.image.width,
+        config.image.height,
+    )));
 
-    img.enumerate_pixels_mut()
-        .par_bridge()
-        .for_each_with(pb, |pb, (x, y, pixel)| {
+    (0..tile_count)
+        .into_par_iter()
+        .for_each_with(pb, |pb, tile_index| {
+            let tile_x = tile_index % tiles_x;
+            let tile_y = tile_index / tiles_x;
+            let x_start = tile_x * tile_size;
+            let y_start = tile_y * tile_size;
+            let x_end = (x_start + tile_size).min(config.image.width as usize);
+            let y_end = (y_start + tile_size).min(config.image.height as usize);
+
             let mut rng = rand::thread_rng();
-            let mut color = Vec3::new(0.0, 0.0, 0.0);
-            for _ in 0..config.image.samples_per_pixel {
-                let u_offset: f64 = rng.gen();
-                let v_offset: f64 = rng.gen();
-                let u = (x as f64 + u_offset + 0.5) / config.image.width as f64;
-                let v = 1.0 - (y as f64 + v_offset + 0.5) / config.image.height as f64;
-                let ray = scene.camera.create_ray(u, v);
-                color += trace(&ray, scene, 0);
-            }
-            color /= config.image.samples_per_pixel as f64;
-            color = post_process(color, &config.post_processing);
-            *pixel = image::Rgb([
-                (color.x * 255.0).min(255.0) as u8,
-                (color.y * 255.0).min(255.0) as u8,
-                (color.z * 255.0).min(255.0) as u8,
-            ]);
+            for y in y_start..y_end {
+                for x in x_start..x_end {
+                    let mut color = Vec3::new(0.0, 0.0, 0.0);
+                    for _ in 0..config.image.samples_per_pixel {
+                        let u_offset: f64 = rng.gen();
+                        let v_offset: f64 = rng.gen();
+                        let u = (x as f64 + u_offset + 0.5) / config.image.width as f64;
+                        let v = 1.0 - (y as f64 + v_offset + 0.5) / config.image.height as f64;
+                        let ray = scene.camera.create_ray(u, v);
+                        color += trace(&ray, scene, 0);
+                    }
+                    color /= config.image.samples_per_pixel as f64;
+                    color = post_process(color, &config.post_processing);
+                    let mut img = img.lock().unwrap();
+                    let img_pixel = img.get_pixel_mut(x as u32, y as u32);
+                    *img_pixel = image::Rgb([
+                        (color.x * 255.0).min(255.0) as u8,
+                        (color.y * 255.0).min(255.0) as u8,
+                        (color.z * 255.0).min(255.0) as u8,
+                    ]);
 
-            pb.inc(1);
+                    pb.inc(1);
+                }
+            }
         });
     Arc::try_unwrap(progress_bar)
         .expect("Failed to unwrap progress bar")
         .finish_with_message("Render complete!");
 
-    img
+    Arc::try_unwrap(img)
+        .expect("Failed to unwrap image")
+        .into_inner()
+        .unwrap()
 }
