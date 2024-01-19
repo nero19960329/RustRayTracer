@@ -1,6 +1,9 @@
 [image]
 width = 320
 height = 240
+
+[sampler]
+type = "Random"
 samples_per_pixel = 4
 
 [post_processing]

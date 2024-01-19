@@ -1,9 +1,9 @@
 use super::math::{
     fresnel, reflect, refract, spherical_to_world, Point3D, Ray, Vec3D, Vec3DConfig,
 };
+use super::sampler::Sampler;
 use cgmath::{Array, InnerSpace, Zero};
 use log::warn;
-use rand::Rng;
 use serde::Deserialize;
 use std::f64::consts::{FRAC_1_PI, PI};
 use std::fmt::Debug;
@@ -21,7 +21,13 @@ impl ScatterResult {
 }
 
 pub trait Material: Sync + Send + Debug {
-    fn scatter(&self, ray_in: &Ray, hit_point: Point3D, normal: Vec3D) -> Option<ScatterResult>;
+    fn scatter(
+        &self,
+        ray_in: &Ray,
+        hit_point: Point3D,
+        normal: Vec3D,
+        sampler: &mut dyn Sampler,
+    ) -> Option<ScatterResult>;
 
     fn bxdf(&self, ray_in: &Ray, ray_out: &Ray, hit_point: Point3D, normal: Vec3D) -> Vec3D;
     fn emission(&self) -> Vec3D {
@@ -33,7 +39,7 @@ pub trait Material: Sync + Send + Debug {
 pub struct MockMaterial;
 
 impl Material for MockMaterial {
-    fn scatter(&self, _: &Ray, _: Point3D, _: Vec3D) -> Option<ScatterResult> {
+    fn scatter(&self, _: &Ray, _: Point3D, _: Vec3D, _: &mut dyn Sampler) -> Option<ScatterResult> {
         None
     }
 
@@ -48,7 +54,7 @@ pub struct Emissive {
 }
 
 impl Material for Emissive {
-    fn scatter(&self, _: &Ray, _: Point3D, _: Vec3D) -> Option<ScatterResult> {
+    fn scatter(&self, _: &Ray, _: Point3D, _: Vec3D, _: &mut dyn Sampler) -> Option<ScatterResult> {
         None
     }
 
@@ -72,10 +78,14 @@ pub struct Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _: &Ray, hit_point: Point3D, normal: Vec3D) -> Option<ScatterResult> {
-        let mut rng = rand::thread_rng();
-        let u: f64 = rng.gen();
-        let v: f64 = rng.gen();
+    fn scatter(
+        &self,
+        _: &Ray,
+        hit_point: Point3D,
+        normal: Vec3D,
+        sampler: &mut dyn Sampler,
+    ) -> Option<ScatterResult> {
+        let (u, v) = sampler.get_2d();
         let theta = (1.0 - u).sqrt().acos();
         let phi = 2.0 * PI * v;
 
@@ -105,11 +115,15 @@ pub struct PhongSpecular {
 }
 
 impl Material for PhongSpecular {
-    fn scatter(&self, ray_in: &Ray, hit_point: Point3D, normal: Vec3D) -> Option<ScatterResult> {
+    fn scatter(
+        &self,
+        ray_in: &Ray,
+        hit_point: Point3D,
+        normal: Vec3D,
+        sampler: &mut dyn Sampler,
+    ) -> Option<ScatterResult> {
         let reflected = reflect(ray_in.direction, normal);
-        let mut rng = rand::thread_rng();
-        let u: f64 = rng.gen();
-        let v: f64 = rng.gen();
+        let (u, v) = sampler.get_2d();
         let theta = u.powf(1.0 / (self.shininess + 1.0)).acos();
         let phi = 2.0 * PI * v;
 
@@ -153,7 +167,13 @@ pub struct IdealReflector {}
 pub struct IdealReflectorConfig {}
 
 impl Material for IdealReflector {
-    fn scatter(&self, ray_in: &Ray, hit_point: Point3D, normal: Vec3D) -> Option<ScatterResult> {
+    fn scatter(
+        &self,
+        ray_in: &Ray,
+        hit_point: Point3D,
+        normal: Vec3D,
+        _: &mut dyn Sampler,
+    ) -> Option<ScatterResult> {
         let reflected = reflect(ray_in.direction, normal);
         let new_ray = Ray {
             origin: hit_point,
@@ -184,7 +204,13 @@ pub struct IdealDielectricConfig {
 }
 
 impl Material for IdealDielectric {
-    fn scatter(&self, ray_in: &Ray, hit_point: Point3D, normal: Vec3D) -> Option<ScatterResult> {
+    fn scatter(
+        &self,
+        ray_in: &Ray,
+        hit_point: Point3D,
+        normal: Vec3D,
+        sampler: &mut dyn Sampler,
+    ) -> Option<ScatterResult> {
         let mut outward_normal = normal; // normal pointing out of the surface
 
         // check if ray is inside the object
@@ -199,8 +225,7 @@ impl Material for IdealDielectric {
 
         let unit_direction = ray_in.direction.normalize();
         let cos_theta = (-unit_direction).dot(outward_normal);
-        let mut rng = rand::thread_rng();
-        let r: f64 = rng.gen();
+        let r = sampler.get_1d();
         let reflectance = fresnel(cos_theta, eta_i, eta_t);
         if reflectance > 1.0 {
             panic!("reflectance > 1.0");

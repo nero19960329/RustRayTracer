@@ -1,7 +1,8 @@
-use cgmath::{ElementWise, InnerSpace, Point3, Vector3};
+use cgmath::{ElementWise, InnerSpace, Point2, Point3, Vector3};
 use serde::Deserialize;
 
 pub type Vec3D = Vector3<f64>;
+pub type Point2U = Point2<u32>;
 pub type Point3D = Point3<f64>;
 
 #[derive(Deserialize)]

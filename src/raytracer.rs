@@ -1,15 +1,14 @@
 use super::math::{Ray, Vec3D};
+use super::sampler::Sampler;
 use super::scene::Scene;
 use cgmath::{Array, ElementWise, InnerSpace, Zero};
 use log::warn;
-use rand::Rng;
 
 const MIN_DEPTH: u32 = 3;
 const RUSSIAN_ROULETTE_PROB: f64 = 0.8;
 
-pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3D {
+pub fn trace(ray: &Ray, scene: &Scene, depth: u32, sampler: &mut dyn Sampler) -> Vec3D {
     let mut color = Vec3D::zero();
-    let mut rng = rand::thread_rng();
 
     let p = {
         if depth < MIN_DEPTH {
@@ -19,7 +18,7 @@ pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3D {
         }
     };
 
-    if rng.gen::<f64>() > p {
+    if sampler.get_1d() > p {
         return color;
     }
 
@@ -31,7 +30,7 @@ pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3D {
     let hit = hit.unwrap();
     color += hit.material.emission();
 
-    let scatter_result = hit.material.scatter(ray, hit.p, hit.normal);
+    let scatter_result = hit.material.scatter(ray, hit.p, hit.normal, sampler);
     if scatter_result.is_none() {
         return color;
     }
@@ -47,7 +46,8 @@ pub fn trace(ray: &Ray, scene: &Scene, depth: u32) -> Vec3D {
     if !bxdf.is_finite() {
         warn!("bxdf not finite, hit.material: {:?}", hit.material);
     }
-    let income = cos_theta * bxdf.mul_element_wise(trace(&scatter_result.ray, scene, depth + 1))
+    let income = cos_theta
+        * bxdf.mul_element_wise(trace(&scatter_result.ray, scene, depth + 1, sampler))
         / scatter_result.pdf;
     if !income.is_finite() {
         warn!("income not finite");
