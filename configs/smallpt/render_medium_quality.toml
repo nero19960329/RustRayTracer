@@ -3,8 +3,11 @@ width = 1024
 height = 768
 
 [sampler]
-type = "Random"
+type = "Stratified"
 samples_per_pixel = 1024
+x_strata = 32
+y_strata = 32
+
 
 [post_processing]
 tone_mapping = "reinhard"

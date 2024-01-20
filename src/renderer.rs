@@ -1,4 +1,4 @@
-use super::math::{Vec3D, Vec3DConfig};
+use super::math::{Point2U, Vec3D, Vec3DConfig};
 use super::raytracer::trace;
 use super::sampler::SamplerConfig;
 use super::scene::Scene;
@@ -111,13 +111,17 @@ pub fn render(config: &RenderConfig, scene: &Scene) -> RgbImage {
             let spp = sampler.samples_per_pixel();
             for y in y_start..y_end {
                 for x in x_start..x_end {
+                    sampler.start_pixel(Point2U::new(x as u32, y as u32));
                     let mut color = Vec3D::new(0.0, 0.0, 0.0);
-                    for _ in 0..spp {
+                    loop {
                         let (u_offset, v_offset) = sampler.get_2d();
                         let u = (x as f64 + u_offset + 0.5) / config.image.width as f64;
                         let v = 1.0 - (y as f64 + v_offset + 0.5) / config.image.height as f64;
                         let ray = scene.camera.create_ray(u, v);
                         color += trace(&ray, scene, 0, &mut *sampler);
+                        if !sampler.start_next_sample() {
+                            break;
+                        }
                     }
                     color /= spp as f64;
                     color = post_process(color, &config.post_processing);

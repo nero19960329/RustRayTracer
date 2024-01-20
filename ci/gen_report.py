@@ -230,8 +230,9 @@ def main(
             render_config_data = toml.load(open(render_config, "r", encoding="utf-8"))
             width = render_config_data["image"]["width"]
             height = render_config_data["image"]["height"]
-            spp = render_config_data["image"]["samples_per_pixel"]
-            image_caption = f"{name}@{width}x{height}x{spp}spp"
+            sampler = render_config_data["sampler"]["type"]
+            spp = render_config_data["sampler"]["samples_per_pixel"]
+            image_caption = f"{name}@{sampler} Sampler x {spp}spp@{width} x {height}"
             task_data.image_captions.append(image_caption)
 
             if not upload:
