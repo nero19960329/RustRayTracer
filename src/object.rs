@@ -1,34 +1,34 @@
 use super::material::{Material, MaterialConfig};
-use super::math::{Point, PointConfig, Ray, Vec3, Vec3Config};
+use super::math::{Point3D, Point3DConfig, Ray, Vec3D, Vec3DConfig};
 use cgmath::InnerSpace;
 use serde::Deserialize;
 use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Sphere {
-    pub center: Point,
+    pub center: Point3D,
     pub radius: f64,
     pub material: Arc<dyn Material>,
 }
 
 #[derive(Deserialize)]
 pub struct SphereConfig {
-    center: PointConfig,
+    center: Point3DConfig,
     radius: f64,
     material: MaterialConfig,
 }
 
 #[derive(Debug)]
 pub struct Plane {
-    pub point: Point,
-    pub normal: Vec3,
+    pub point: Point3D,
+    pub normal: Vec3D,
     pub material: Arc<dyn Material>,
 }
 
 #[derive(Deserialize)]
 pub struct PlaneConfig {
-    point: PointConfig,
-    normal: Vec3Config,
+    point: Point3DConfig,
+    normal: Vec3DConfig,
     material: MaterialConfig,
 }
 
@@ -64,8 +64,8 @@ impl ObjectConfig {
 #[derive(Debug)]
 pub struct HitRecord {
     pub t: f64,
-    pub p: Point,
-    pub normal: Vec3,
+    pub p: Point3D,
+    pub normal: Vec3D,
     pub material: Arc<dyn Material>,
 }
 
@@ -191,7 +191,7 @@ mod tests {
     fn test_sphere_intersect() {
         let mut rng = rand::thread_rng();
         for _ in 0..10 {
-            let center = Point::new(
+            let center = Point3D::new(
                 rng.gen_range(-10.0..10.0),
                 rng.gen_range(-10.0..10.0),
                 rng.gen_range(-10.0..10.0),
@@ -204,7 +204,7 @@ mod tests {
             };
             let p1 = Ray {
                 origin: center,
-                direction: Vec3::new(
+                direction: Vec3D::new(
                     rng.gen_range(-1.0..1.0),
                     rng.gen_range(-1.0..1.0),
                     rng.gen_range(-1.0..1.0),
@@ -214,7 +214,7 @@ mod tests {
             .at(rng.gen_range(0.0..radius * 2.0));
             let p2 = Ray {
                 origin: center,
-                direction: Vec3::new(
+                direction: Vec3D::new(
                     rng.gen_range(-1.0..1.0),
                     rng.gen_range(-1.0..1.0),
                     rng.gen_range(-1.0..1.0),
@@ -244,12 +244,12 @@ mod tests {
     fn test_plane_intersect() {
         let mut rng = rand::thread_rng();
         for _ in 0..10 {
-            let point = Point::new(
+            let point = Point3D::new(
                 rng.gen_range(-10.0..10.0),
                 rng.gen_range(-10.0..10.0),
                 rng.gen_range(-10.0..10.0),
             );
-            let normal = Vec3::new(
+            let normal = Vec3D::new(
                 rng.gen_range(-1.0..1.0),
                 rng.gen_range(-1.0..1.0),
                 rng.gen_range(-1.0..1.0),
@@ -262,7 +262,7 @@ mod tests {
             };
             let p1 = Ray {
                 origin: point,
-                direction: Vec3::new(
+                direction: Vec3D::new(
                     rng.gen_range(-1.0..1.0),
                     rng.gen_range(-1.0..1.0),
                     rng.gen_range(-1.0..1.0),
@@ -272,7 +272,7 @@ mod tests {
             .at(rng.gen_range(0.0..10.0));
             let p2 = Ray {
                 origin: point,
-                direction: Vec3::new(
+                direction: Vec3D::new(
                     rng.gen_range(-1.0..1.0),
                     rng.gen_range(-1.0..1.0),
                     rng.gen_range(-1.0..1.0),

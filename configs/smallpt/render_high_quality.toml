@@ -1,7 +1,12 @@
 [image]
 width = 1024
 height = 768
+
+[sampler]
+type = "Stratified"
 samples_per_pixel = 16384
+x_strata = 128
+y_strata = 128
 
 [post_processing]
 tone_mapping = "reinhard"

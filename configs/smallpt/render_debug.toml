@@ -1,11 +1,16 @@
 [image]
 width = 320
 height = 240
-samples_per_pixel = 4
+
+[sampler]
+type = "Stratified"
+samples_per_pixel = 64
+x_strata = 8
+y_strata = 8
 
 [post_processing]
 tone_mapping = "reinhard"
 gamma_correction = true
 
 [performance]
-parallelism = 1
+parallelism = 0

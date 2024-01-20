@@ -4,6 +4,7 @@ mod math;
 mod object;
 mod raytracer;
 mod renderer;
+mod sampler;
 mod scene;
 
 use clap::Parser;
