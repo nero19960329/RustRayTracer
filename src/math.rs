@@ -1,9 +1,11 @@
-use cgmath::{ElementWise, InnerSpace, Point2, Point3, Vector3};
+use cgmath::{ElementWise, InnerSpace, Matrix4, Point2, Point3, Vector3, Vector4};
 use serde::Deserialize;
 
 pub type Vec3D = Vector3<f64>;
+pub type Vec4D = Vector4<f64>;
 pub type Point2U = Point2<u32>;
 pub type Point3D = Point3<f64>;
+pub type Matrix4D = Matrix4<f64>;
 
 #[derive(Deserialize)]
 pub struct Vec3DConfig {
@@ -29,6 +31,87 @@ impl Point3DConfig {
     pub fn to_point(&self) -> Point3D {
         Point3D::new(self.x, self.y, self.z)
     }
+}
+
+#[derive(Deserialize)]
+pub struct Matrix4DConfig {
+    m11: f64,
+    m12: f64,
+    m13: f64,
+    m14: f64,
+    m21: f64,
+    m22: f64,
+    m23: f64,
+    m24: f64,
+    m31: f64,
+    m32: f64,
+    m33: f64,
+    m34: f64,
+    m41: f64,
+    m42: f64,
+    m43: f64,
+    m44: f64,
+}
+
+impl Matrix4DConfig {
+    pub fn to_matrix(&self) -> Matrix4D {
+        Matrix4D::new(
+            self.m11, self.m12, self.m13, self.m14, self.m21, self.m22, self.m23, self.m24,
+            self.m31, self.m32, self.m33, self.m34, self.m41, self.m42, self.m43, self.m44,
+        )
+    }
+}
+
+const EYE_MATRIX4D: Matrix4D = Matrix4D {
+    x: Vec4D {
+        x: 1.0,
+        y: 0.0,
+        z: 0.0,
+        w: 0.0,
+    },
+    y: Vec4D {
+        x: 0.0,
+        y: 1.0,
+        z: 0.0,
+        w: 0.0,
+    },
+    z: Vec4D {
+        x: 0.0,
+        y: 0.0,
+        z: 1.0,
+        w: 0.0,
+    },
+    w: Vec4D {
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+        w: 1.0,
+    },
+};
+
+pub fn unwrap_matrix4d_config_to_matrix4d(config: Option<&Matrix4DConfig>) -> Matrix4D {
+    match config {
+        Some(config) => config.to_matrix(),
+        None => EYE_MATRIX4D,
+    }
+}
+
+pub fn point3_to_vec4(p: Point3D) -> Vec4D {
+    Vec4D::new(p.x, p.y, p.z, 1.0)
+}
+
+pub fn vec4_to_point3(v: Vec4D) -> Point3D {
+    assert!(v.w != 0.0);
+    Point3D::new(v.x / v.w, v.y / v.w, v.z / v.w)
+}
+
+pub fn transform_point3(m: Matrix4D, p: Point3D) -> Point3D {
+    vec4_to_point3(m * point3_to_vec4(p))
+}
+
+pub fn transform_vec3(m: Matrix4D, v: Vec3D) -> Vec3D {
+    let u = m * Vec4D::new(v.x, v.y, v.z, 0.0);
+    Vec3D::new(u.x, u.y, u.z)
 }
 
 #[derive(Debug)]
