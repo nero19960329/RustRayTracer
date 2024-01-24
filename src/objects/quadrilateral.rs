@@ -50,7 +50,7 @@ fn is_quadrilateral_convex(v0: Point3D, v1: Point3D, v2: Point3D, v3: Point3D) -
         && cross4.dot(cross1) >= 0.0
 }
 
-fn quadrilateral_intersect(
+pub fn quadrilateral_intersect(
     v0: Point3D,
     v1: Point3D,
     v2: Point3D,

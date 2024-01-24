@@ -1,0 +1,8 @@
+assets/large_box_0000_m000.ply filter=lfs diff=lfs merge=lfs -text
+assets/test.ply filter=lfs diff=lfs merge=lfs -text
+configs/cornell_box/Light_0000_m000.ply filter=lfs diff=lfs merge=lfs -text
+configs/cornell_box/cornell_box_0000_m000.ply filter=lfs diff=lfs merge=lfs -text
+configs/cornell_box/cornell_box_0000_m001.ply filter=lfs diff=lfs merge=lfs -text
+configs/cornell_box/cornell_box_0000_m002.ply filter=lfs diff=lfs merge=lfs -text
+configs/cornell_box/large_box_0000_m000.ply filter=lfs diff=lfs merge=lfs -text
+configs/cornell_box/small_box_0000_m000.ply filter=lfs diff=lfs merge=lfs -text

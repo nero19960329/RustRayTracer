@@ -3,3 +3,7 @@ tasks:
   scene_config: "configs/smallpt/scene.toml"
   render_configs:
   - "configs/smallpt/render_low_quality.toml"
+- name: "cornell box"
+  scene_config: "configs/cornell_box/scene.toml"
+  render_configs:
+  - "configs/cornell_box/render_low_quality.toml"

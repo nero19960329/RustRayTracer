@@ -5,3 +5,9 @@ tasks:
   - "configs/smallpt/render_low_quality.toml"
   - "configs/smallpt/render_medium_quality.toml"
   - "configs/smallpt/render_high_quality.toml"
+- name: "cornell box"
+  scene_config: "configs/cornell_box/scene.toml"
+  render_configs:
+  - "configs/cornell_box/render_low_quality.toml"
+  - "configs/cornell_box/render_medium_quality.toml"
+  - "configs/cornell_box/render_high_quality.toml"

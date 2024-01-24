@@ -1,0 +1,16 @@
+[image]
+width = 500
+height = 500
+
+[sampler]
+type = "Stratified"
+samples_per_pixel = 16384
+x_strata = 128
+y_strata = 128
+
+[post_processing]
+tone_mapping = "reinhard"
+gamma_correction = true
+
+[performance]
+parallelism = 0
