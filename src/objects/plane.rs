@@ -1,7 +1,7 @@
 use super::super::material::{Material, MaterialConfig};
 use super::super::math::{
-    transform_point3, transform_vec3, Matrix4D, Matrix4DConfig, Point3D, Point3DConfig, Ray, Vec3D,
-    Vec3DConfig,
+    transform_point3, transform_vec3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig,
+    Point3D, Point3DConfig, Ray, Vec3D, Vec3DConfig,
 };
 use super::common::HitRecord;
 use cgmath::InnerSpace;
@@ -50,6 +50,17 @@ impl Plane {
             normal: transform_vec3(*transform, self.normal).normalize(),
             material: Arc::clone(&self.material),
         }
+    }
+}
+
+impl PlaneConfig {
+    pub fn to_instance(&self) -> Plane {
+        Plane {
+            point: self.point.to_point(),
+            normal: self.normal.to_vec3().normalize(),
+            material: self.material.to_material(),
+        }
+        .transform(&unwrap_matrix4d_config_to_matrix4d(self.transform.as_ref()))
     }
 }
 

@@ -1,5 +1,8 @@
 use super::super::material::{Material, MaterialConfig};
-use super::super::math::{transform_point3, Matrix4D, Matrix4DConfig, Point3D, Point3DConfig, Ray};
+use super::super::math::{
+    transform_point3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig, Point3D,
+    Point3DConfig, Ray,
+};
 use super::common::HitRecord;
 use cgmath::InnerSpace;
 use serde::Deserialize;
@@ -102,6 +105,17 @@ impl Sphere {
             radius: self.radius,
             material: Arc::clone(&self.material),
         }
+    }
+}
+
+impl SphereConfig {
+    pub fn to_instance(&self) -> Sphere {
+        Sphere {
+            center: self.center.to_point(),
+            radius: self.radius,
+            material: self.material.to_material(),
+        }
+        .transform(&unwrap_matrix4d_config_to_matrix4d(self.transform.as_ref()))
     }
 }
 
