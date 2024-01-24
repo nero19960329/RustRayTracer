@@ -21,7 +21,7 @@ pub struct TriangleConfig {
     pub transform: Option<Matrix4DConfig>,
 }
 
-fn triangle_intersect(
+pub fn triangle_intersect(
     v0: Point3D,
     v1: Point3D,
     v2: Point3D,

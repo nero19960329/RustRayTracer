@@ -1,6 +1,7 @@
 mod common;
 mod object;
 mod plane;
+mod quadrilateral;
 mod sphere;
 mod triangle;
 
