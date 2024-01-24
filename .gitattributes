@@ -1,0 +1,2 @@
+assets/large_box_0000_m000.ply filter=lfs diff=lfs merge=lfs -text
+assets/test.ply filter=lfs diff=lfs merge=lfs -text
