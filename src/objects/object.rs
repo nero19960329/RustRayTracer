@@ -1,6 +1,7 @@
 use super::super::math::Ray;
 use super::common::HitRecord;
 use super::plane::{Plane, PlaneConfig};
+use super::quadrilateral::{Quadrilateral, QuadrilateralConfig};
 use super::sphere::{Sphere, SphereConfig};
 use super::triangle::{Triangle, TriangleConfig};
 use serde::Deserialize;
@@ -9,6 +10,7 @@ pub enum Object {
     Sphere(Sphere),
     Plane(Plane),
     Triangle(Triangle),
+    Quadrilateral(Quadrilateral),
 }
 
 #[derive(Deserialize)]
@@ -17,6 +19,7 @@ pub enum ObjectConfig {
     Sphere(SphereConfig),
     Plane(PlaneConfig),
     Triangle(TriangleConfig),
+    Quadrilateral(QuadrilateralConfig),
 }
 
 impl ObjectConfig {
@@ -25,6 +28,7 @@ impl ObjectConfig {
             ObjectConfig::Sphere(config) => Object::Sphere(config.to_instance()),
             ObjectConfig::Plane(config) => Object::Plane(config.to_instance()),
             ObjectConfig::Triangle(config) => Object::Triangle(config.to_instance()),
+            ObjectConfig::Quadrilateral(config) => Object::Quadrilateral(config.to_instance()),
         }
     }
 }
@@ -35,6 +39,7 @@ impl Object {
             Object::Sphere(ref sphere) => sphere.intersect(ray, t_min, t_max),
             Object::Plane(ref plane) => plane.intersect(ray, t_min, t_max),
             Object::Triangle(ref triangle) => triangle.intersect(ray, t_min, t_max),
+            Object::Quadrilateral(ref quadrilateral) => quadrilateral.intersect(ray, t_min, t_max),
         }
     }
 }
