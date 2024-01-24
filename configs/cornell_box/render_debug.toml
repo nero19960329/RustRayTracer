@@ -1,0 +1,14 @@
+[image]
+width = 250
+height = 250
+
+[sampler]
+type = "Random"
+samples_per_pixel = 64
+
+[post_processing]
+tone_mapping = "reinhard"
+gamma_correction = true
+
+[performance]
+parallelism = 0
