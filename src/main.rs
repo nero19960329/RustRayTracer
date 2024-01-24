@@ -1,7 +1,7 @@
 mod camera;
 mod material;
 mod math;
-mod object;
+mod objects;
 mod raytracer;
 mod renderer;
 mod sampler;
