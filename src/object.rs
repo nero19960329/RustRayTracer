@@ -1,5 +1,8 @@
 use super::material::{Material, MaterialConfig};
-use super::math::{Point3D, Point3DConfig, Ray, Vec3D, Vec3DConfig};
+use super::math::{
+    transform_point3, transform_vec3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig,
+    Point3D, Point3DConfig, Ray, Vec3D, Vec3DConfig,
+};
 use cgmath::InnerSpace;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -16,6 +19,7 @@ pub struct SphereConfig {
     center: Point3DConfig,
     radius: f64,
     material: MaterialConfig,
+    transform: Option<Matrix4DConfig>,
 }
 
 #[derive(Debug)]
@@ -30,6 +34,7 @@ pub struct PlaneConfig {
     point: Point3DConfig,
     normal: Vec3DConfig,
     material: MaterialConfig,
+    transform: Option<Matrix4DConfig>,
 }
 
 pub enum Object {
@@ -47,16 +52,26 @@ pub enum ObjectConfig {
 impl ObjectConfig {
     pub fn to_object(&self) -> Object {
         match self {
-            ObjectConfig::Sphere(config) => Object::Sphere(Sphere {
-                center: config.center.to_point(),
-                radius: config.radius,
-                material: config.material.to_material(),
-            }),
-            ObjectConfig::Plane(config) => Object::Plane(Plane {
-                point: config.point.to_point(),
-                normal: config.normal.to_vec3().normalize(),
-                material: config.material.to_material(),
-            }),
+            ObjectConfig::Sphere(config) => Object::Sphere(
+                Sphere {
+                    center: config.center.to_point(),
+                    radius: config.radius,
+                    material: config.material.to_material(),
+                }
+                .transform(&unwrap_matrix4d_config_to_matrix4d(
+                    config.transform.as_ref(),
+                )),
+            ),
+            ObjectConfig::Plane(config) => Object::Plane(
+                Plane {
+                    point: config.point.to_point(),
+                    normal: config.normal.to_vec3().normalize(),
+                    material: config.material.to_material(),
+                }
+                .transform(&unwrap_matrix4d_config_to_matrix4d(
+                    config.transform.as_ref(),
+                )),
+            ),
         }
     }
 }
@@ -144,6 +159,14 @@ impl Sphere {
     pub fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         return self.intersect_geometric(ray, t_min, t_max);
     }
+
+    pub fn transform(&mut self, transform: &Matrix4D) -> Self {
+        Sphere {
+            center: transform_point3(*transform, self.center),
+            radius: self.radius,
+            material: Arc::clone(&self.material),
+        }
+    }
 }
 
 impl Plane {
@@ -165,6 +188,14 @@ impl Plane {
             normal: self.normal,
             material: Arc::clone(&self.material),
         })
+    }
+
+    pub fn transform(&mut self, transform: &Matrix4D) -> Self {
+        Plane {
+            point: transform_point3(*transform, self.point),
+            normal: transform_vec3(*transform, self.normal).normalize(),
+            material: Arc::clone(&self.material),
+        }
     }
 }
 
