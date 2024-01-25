@@ -1,6 +1,7 @@
 use super::super::material::Material;
 use super::super::math::{Point3D, Vec3D};
 use super::mesh::Mesh;
+use super::quadrilateral::{are_points_coplanar, is_quadrilateral_convex};
 use cgmath::InnerSpace;
 use log::info;
 use ply_rs::parser::Parser;
@@ -9,13 +10,13 @@ use std::fs::File;
 use std::sync::Arc;
 
 pub trait MeshLoader {
-    fn load(&self, path: &str, material: Arc<dyn Material>) -> Result<Mesh, String>;
+    fn load(&self, path: &str, material: Arc<dyn Material>) -> Mesh;
 }
 
 pub struct PlyMeshLoader {}
 
 impl MeshLoader for PlyMeshLoader {
-    fn load(&self, path: &str, material: Arc<dyn Material>) -> Result<Mesh, String> {
+    fn load(&self, path: &str, material: Arc<dyn Material>) -> Mesh {
         info!("Loading mesh from {}", path);
         let mut file = File::open(path).unwrap();
         let p = Parser::<DefaultElement>::new();
@@ -74,23 +75,51 @@ impl MeshLoader for PlyMeshLoader {
             vertices.len(),
             indices.len()
         );
-        Ok(Mesh {
+        Mesh {
             vertices,
             normals,
             indices,
             material,
-        })
+        }
     }
 }
 
 pub fn load_mesh(path: &str, material: Arc<dyn Material>) -> Result<Mesh, String> {
-    match path.split('.').last() {
-        Some("ply") => {
-            let loader = PlyMeshLoader {};
-            loader.load(path, material)
+    let mesh = match path.split('.').last() {
+        Some("ply") => PlyMeshLoader {}.load(path, material),
+        _ => return Err(format!("Unsupported mesh format: {}", path)),
+    };
+
+    // check if the mesh is valid
+    for indices in &mesh.indices {
+        if indices.len() < 3 {
+            return Err(format!("Invalid mesh: {:?}", indices));
         }
-        _ => Err(format!("Unsupported mesh format: {}", path)),
+        if indices.len() == 3 {
+            // triangle
+            continue;
+        } else if indices.len() == 4 {
+            // quadrilateral
+            let a = mesh.vertices[indices[0]];
+            let b = mesh.vertices[indices[1]];
+            let c = mesh.vertices[indices[2]];
+            let d = mesh.vertices[indices[3]];
+            if !are_points_coplanar(a, b, c, d) {
+                return Err(format!(
+                    "Invalid mesh: {:?} {:?} {:?} {:?}, Reason: coplanar",
+                    a, b, c, d
+                ));
+            }
+            if !is_quadrilateral_convex(a, b, c, d) {
+                return Err(format!(
+                    "Invalid mesh: {:?} {:?} {:?} {:?}, Reason: non-convex",
+                    a, b, c, d
+                ));
+            }
+        }
     }
+
+    Ok(mesh)
 }
 
 #[cfg(test)]
@@ -99,12 +128,9 @@ mod test {
     use crate::material::MockMaterial;
 
     #[test]
-    fn test_load_mesh_from_ply() {
+    fn test_load_mesh() {
         let ply_name = "assets/test.ply";
-        let loader = PlyMeshLoader {};
-        let mesh = loader.load(ply_name, Arc::new(MockMaterial {}));
-        assert!(!mesh.is_err());
-        let mesh = mesh.unwrap();
+        let mesh = load_mesh(ply_name, Arc::new(MockMaterial {})).expect("Failed to load mesh");
         assert_eq!(mesh.vertices.len(), 24);
         assert_eq!(mesh.normals.len(), 24);
         assert_eq!(mesh.indices.len(), 6);

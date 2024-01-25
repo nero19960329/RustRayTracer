@@ -34,7 +34,7 @@ pub fn are_points_coplanar(v0: Point3D, v1: Point3D, v2: Point3D, v3: Point3D) -
     (cos.abs() - 1.0).abs() < 1e-3
 }
 
-fn is_quadrilateral_convex(v0: Point3D, v1: Point3D, v2: Point3D, v3: Point3D) -> bool {
+pub fn is_quadrilateral_convex(v0: Point3D, v1: Point3D, v2: Point3D, v3: Point3D) -> bool {
     if !are_points_coplanar(v0, v1, v2, v3) {
         return false;
     }
@@ -64,14 +64,6 @@ pub fn quadrilateral_intersect(
     t_min: f64,
     t_max: f64,
 ) -> Option<(f64, f64, f64, f64)> {
-    if !are_points_coplanar(v0, v1, v2, v3) {
-        panic!("Quadrilateral is not coplanar");
-    }
-
-    if !is_quadrilateral_convex(v0, v1, v2, v3) {
-        panic!("Quadrilateral is not convex");
-    }
-
     // reject rays using the barycentric coordinates of
     // the intersection point with respect to t
     let e01 = v1 - v0;
