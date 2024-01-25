@@ -5,6 +5,7 @@ use super::super::math::{
 };
 use super::common::HitRecord;
 use cgmath::InnerSpace;
+use log::debug;
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -21,12 +22,16 @@ pub struct QuadrilateralConfig {
     pub transform: Option<Matrix4DConfig>,
 }
 
-fn are_points_coplanar(v0: Point3D, v1: Point3D, v2: Point3D, v3: Point3D) -> bool {
+pub fn are_points_coplanar(v0: Point3D, v1: Point3D, v2: Point3D, v3: Point3D) -> bool {
     let e01 = v1 - v0;
     let e02 = v2 - v0;
     let e03 = v3 - v0;
-    let n = e01.cross(e02);
-    n.dot(e03).abs() < 1e-3
+    let n1 = e01.cross(e02);
+    let n2 = e02.cross(e03);
+    // cosine of the angle between n1 and n2
+    let cos = n1.dot(n2) / (n1.magnitude() * n2.magnitude());
+    debug!("cosine of the angle between n1 and n2: {}", cos);
+    (cos.abs() - 1.0).abs() < 1e-3
 }
 
 fn is_quadrilateral_convex(v0: Point3D, v1: Point3D, v2: Point3D, v3: Point3D) -> bool {
@@ -231,7 +236,7 @@ mod tests {
     #[test]
     fn test_are_points_coplanar() {
         let mut rng = rand::thread_rng();
-        for _ in 0..10 {
+        for _ in 0..100 {
             let v0 = Point3D::new(rng.gen_range(-10.0..10.0), rng.gen_range(-10.0..10.0), 0.0);
             let v1 = Point3D::new(rng.gen_range(-10.0..10.0), rng.gen_range(-10.0..10.0), 0.0);
             let v2 = Point3D::new(rng.gen_range(-10.0..10.0), rng.gen_range(-10.0..10.0), 0.0);
@@ -244,7 +249,7 @@ mod tests {
                     rng.gen_range(-10.0..10.0),
                     rng.gen_range(-10.0..10.0),
                 );
-                if v3.z.abs() > 1e-6 {
+                if v3.z.abs() > 1.0 {
                     assert!(!are_points_coplanar(v0, v1, v2, v3));
                 }
             }
@@ -254,7 +259,7 @@ mod tests {
     #[test]
     fn test_is_quadrilateral_convex() {
         let mut rng = rand::thread_rng();
-        for _ in 0..10 {
+        for _ in 0..100 {
             let v0 = Point3D::new(-1.0, 1.0, 0.0);
             let v1 = Point3D::new(-1.0, -1.0, 0.0);
             let v2 = Point3D::new(1.0, -1.0, 0.0);
