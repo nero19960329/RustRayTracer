@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2024-01-25
+
 ### Added
 
 - Transformation matrix for object definition at scene
@@ -18,13 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Tile parallelization
 
-## [0.1.1] - 2023-01-18
+## [0.1.1] - 2024-01-18
 
 ### Changed
 
 - Precision from `f32` to `f64` for all calculations
 
-## [0.1.0] - 2023-01-18
+## [0.1.0] - 2024-01-18
 
 ### Added
 
