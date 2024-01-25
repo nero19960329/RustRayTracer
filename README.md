@@ -10,38 +10,46 @@ A soft ray tracer implemented by Rust.
 - Cameras
   - [x] Perspective Camera
   - [ ] Depth of Field
-  - ...
+  - [ ] ...
 - Materials
   - [x] Lambertian
   - [x] Phong Specular
   - [x] Ideal Reflector
   - [x] Ideal Dielectric
   - [ ] Microfacet
-  - ...
+  - [ ] ...
 - Objects
   - [x] Sphere
   - [x] Plane
-  - [ ] Triangle
-  - ...
+  - [x] Triangle
+  - [x] Quadrilateral
+  - [x] Mesh
+  - [ ] ...
+- Sampler
+  - [x] Random
+  - [x] Stratified
+  - [ ] Halton
+  - [ ] Sobol
+  - [ ] ...
 - Rendering
   - [x] Monte-Carlo Path Tracing
   - [ ] Bidirectional Path Tracing
   - [ ] Metropolis Light Transport
-  - ...
+  - [ ] ...
 - Scene
   - [x] smallpt
-  - [ ] Cornell Box
+  - [x] Cornell Box
   - [ ] Veach MIS
   - [ ] ...
 - Aggregation
   - [ ] BVH
   - [ ] Kd-Tree
-  - ...
+  - [ ] ...
 - Post Processing
   - [x] Tone Mapping
   - [x] Gamma Correction
   - [x] White Balance
-  - ...
+  - [ ] ...
 
 # Example Scenes
 

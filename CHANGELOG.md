@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Transformation matrix for object definition at scene
+- Triangle / Quadrilateral / Mesh objects
+- Cornell Box scene
+- Stratified Sampler
+
+### Changed
+
+- Tile parallelization
+
 ## [0.1.1] - 2023-01-18
 
 ### Changed
