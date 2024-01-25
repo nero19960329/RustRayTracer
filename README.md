@@ -57,6 +57,10 @@ smallpt scene MCPT 1024x768 16384spp
 
 ![smallpt scene MCPT 1024x768 16384spp](https://i.imgur.com/gGxFOkM.png)
 
+Cornell Box scene MCPT 500x500 16384spp
+
+![Cornell Box scene MCPT 500x500 16384spp](https://i.imgur.com/e4lEBgj.png)
+
 # Gallery
 
-https://storage.cloud.google.com/rust-ray-tracer/gallery/v0.1.1/report.html
+https://storage.cloud.google.com/rust-ray-tracer/gallery/v0.2.0/report.html
