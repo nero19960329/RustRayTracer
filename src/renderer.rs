@@ -48,7 +48,7 @@ fn white_balance(color: Vec3D, balance: Vec3D) -> Vec3D {
 }
 
 fn post_process(color: Vec3D, config: &PostProcessingConfig) -> Vec3D {
-    if let Some(tone_mapping) = &config.tone_mapping {
+    let color = if let Some(tone_mapping) = &config.tone_mapping {
         match tone_mapping.as_str() {
             "reinhard" => reinhard_tone_mapping(color),
             _ => color,
