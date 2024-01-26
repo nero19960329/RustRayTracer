@@ -118,7 +118,7 @@ pub fn render(config: &RenderConfig, scene: &Scene) -> RgbImage {
                         let u = (x as f64 + u_offset + 0.5) / config.image.width as f64;
                         let v = 1.0 - (y as f64 + v_offset + 0.5) / config.image.height as f64;
                         let ray = scene.camera.create_ray(u, v);
-                        color += trace(&ray, scene, 0, &mut *sampler);
+                        color += trace(&ray, scene, &mut *sampler);
                         if !sampler.start_next_sample() {
                             break;
                         }

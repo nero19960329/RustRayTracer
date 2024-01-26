@@ -114,7 +114,11 @@ pub fn transform_vec3(m: Matrix4D, v: Vec3D) -> Vec3D {
     Vec3D::new(u.x, u.y, u.z)
 }
 
-#[derive(Debug)]
+pub fn max_component(v: Vec3D) -> f64 {
+    v.x.max(v.y).max(v.z)
+}
+
+#[derive(Debug, Clone)]
 pub struct Ray {
     pub origin: Point3D,
     pub direction: Vec3D,
