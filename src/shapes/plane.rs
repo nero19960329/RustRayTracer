@@ -1,25 +1,21 @@
-use super::super::material::{Material, MaterialConfig};
 use super::super::math::{
     transform_point3, transform_vec3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig,
     Point3D, Point3DConfig, Ray, Vec3D, Vec3DConfig,
 };
-use super::common::HitRecord;
+use super::super::object::HitRecord;
 use cgmath::InnerSpace;
 use serde::Deserialize;
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Plane {
     pub point: Point3D,
     pub normal: Vec3D,
-    pub material: Arc<dyn Material>,
 }
 
 #[derive(Deserialize)]
 pub struct PlaneConfig {
     pub point: Point3DConfig,
     pub normal: Vec3DConfig,
-    pub material: MaterialConfig,
     pub transform: Option<Matrix4DConfig>,
 }
 
@@ -40,7 +36,7 @@ impl Plane {
             t: distance,
             p: ray.at(distance),
             normal: self.normal,
-            material: Arc::clone(&self.material),
+            material: None,
         })
     }
 
@@ -48,7 +44,6 @@ impl Plane {
         Plane {
             point: transform_point3(*transform, self.point),
             normal: transform_vec3(*transform, self.normal).normalize(),
-            material: Arc::clone(&self.material),
         }
     }
 }
@@ -58,7 +53,6 @@ impl PlaneConfig {
         Plane {
             point: self.point.to_point(),
             normal: self.normal.to_vec3().normalize(),
-            material: self.material.to_material(),
         }
         .transform(&unwrap_matrix4d_config_to_matrix4d(self.transform.as_ref()))
     }
@@ -67,7 +61,7 @@ impl PlaneConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{material::MockMaterial, math::vec3_approx_eq};
+    use crate::math::vec3_approx_eq;
     use approx::assert_abs_diff_eq;
     use rand::Rng;
 
@@ -89,7 +83,6 @@ mod tests {
             let plane = Plane {
                 point: point,
                 normal: normal,
-                material: Arc::new(MockMaterial {}),
             };
             let p1 = Ray {
                 origin: point,

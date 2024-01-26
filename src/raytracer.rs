@@ -40,7 +40,7 @@ fn generate_camera_vertices(
         }
 
         let hit = hit.unwrap();
-        let material = &hit.material;
+        let material = &hit.material.unwrap();
 
         let path_vertex = PathVertex {
             position: hit.p,

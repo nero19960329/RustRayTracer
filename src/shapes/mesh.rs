@@ -1,28 +1,24 @@
-use super::super::material::{Material, MaterialConfig};
 use super::super::math::{
     transform_point3, transform_vec3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig,
     Point3D, Ray, Vec3D,
 };
-use super::common::HitRecord;
+use super::super::object::HitRecord;
 use super::quadrilateral::quadrilateral_intersect;
 use super::triangle::triangle_intersect;
 use super::utils::load_mesh;
 use cgmath::InnerSpace;
 use serde::Deserialize;
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Mesh {
     pub vertices: Vec<Point3D>,
     pub normals: Vec<Vec3D>,
     pub indices: Vec<Vec<usize>>,
-    pub material: Arc<dyn Material>,
 }
 
 #[derive(Deserialize)]
 pub struct MeshConfig {
     file: String,
-    material: MaterialConfig,
     transform: Option<Matrix4DConfig>,
 }
 
@@ -82,7 +78,7 @@ impl Mesh {
                 t: t,
                 p: p,
                 normal: normal,
-                material: Arc::clone(&self.material),
+                material: None,
             });
         }
 
@@ -102,7 +98,6 @@ impl Mesh {
                 .map(|n| transform_vec3(*transform, *n).normalize())
                 .collect(),
             indices: self.indices.clone(),
-            material: Arc::clone(&self.material),
         };
         mesh
     }
@@ -110,7 +105,7 @@ impl Mesh {
 
 impl MeshConfig {
     pub fn to_instance(&self) -> Mesh {
-        load_mesh(&self.file, self.material.to_material())
+        load_mesh(&self.file)
             .unwrap()
             .transform(&unwrap_matrix4d_config_to_matrix4d(self.transform.as_ref()))
     }

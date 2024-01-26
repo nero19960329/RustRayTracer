@@ -1,23 +1,19 @@
-use super::super::material::{Material, MaterialConfig};
 use super::super::math::{
     transform_point3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig, Point3D,
     Point3DConfig, Ray,
 };
-use super::common::HitRecord;
+use super::super::object::HitRecord;
 use cgmath::InnerSpace;
 use serde::Deserialize;
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Triangle {
     pub vertices: [Point3D; 3],
-    pub material: Arc<dyn Material>,
 }
 
 #[derive(Deserialize)]
 pub struct TriangleConfig {
     pub vertices: [Point3DConfig; 3],
-    pub material: MaterialConfig,
     pub transform: Option<Matrix4DConfig>,
 }
 
@@ -84,7 +80,7 @@ impl Triangle {
             t: t,
             p: p,
             normal: normal,
-            material: Arc::clone(&self.material),
+            material: None,
         });
     }
 
@@ -95,7 +91,6 @@ impl Triangle {
                 transform_point3(*transform, self.vertices[1]),
                 transform_point3(*transform, self.vertices[2]),
             ],
-            material: Arc::clone(&self.material),
         }
     }
 }
@@ -108,7 +103,6 @@ impl TriangleConfig {
                 self.vertices[1].to_point(),
                 self.vertices[2].to_point(),
             ],
-            material: self.material.to_material(),
         }
         .transform(&unwrap_matrix4d_config_to_matrix4d(self.transform.as_ref()))
     }
@@ -117,10 +111,7 @@ impl TriangleConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        material::MockMaterial,
-        math::{vec3_approx_eq, Vec3D},
-    };
+    use crate::math::{vec3_approx_eq, Vec3D};
     use approx::assert_abs_diff_eq;
     use rand::Rng;
 
@@ -145,7 +136,6 @@ mod tests {
             );
             let triangle = Triangle {
                 vertices: [v0, v1, v2],
-                material: Arc::new(MockMaterial {}),
             };
             let p1 = Ray {
                 origin: v0,

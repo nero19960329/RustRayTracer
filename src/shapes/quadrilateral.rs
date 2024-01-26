@@ -1,24 +1,20 @@
-use super::super::material::{Material, MaterialConfig};
 use super::super::math::{
     transform_point3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig, Point3D,
     Point3DConfig, Ray,
 };
-use super::common::HitRecord;
+use super::super::object::HitRecord;
 use cgmath::InnerSpace;
 use log::debug;
 use serde::Deserialize;
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Quadrilateral {
     pub vertices: [Point3D; 4],
-    pub material: Arc<dyn Material>,
 }
 
 #[derive(Deserialize)]
 pub struct QuadrilateralConfig {
     pub vertices: [Point3DConfig; 4],
-    pub material: MaterialConfig,
     pub transform: Option<Matrix4DConfig>,
 }
 
@@ -186,7 +182,7 @@ impl Quadrilateral {
             t: t,
             p: p,
             normal: normal,
-            material: Arc::clone(&self.material),
+            material: None,
         });
     }
 
@@ -198,7 +194,6 @@ impl Quadrilateral {
                 transform_point3(*transform, self.vertices[2]),
                 transform_point3(*transform, self.vertices[3]),
             ],
-            material: Arc::clone(&self.material),
         }
     }
 }
@@ -212,7 +207,6 @@ impl QuadrilateralConfig {
                 self.vertices[2].to_point(),
                 self.vertices[3].to_point(),
             ],
-            material: self.material.to_material(),
         }
         .transform(&unwrap_matrix4d_config_to_matrix4d(self.transform.as_ref()))
     }
@@ -221,7 +215,7 @@ impl QuadrilateralConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::objects::triangle::triangle_intersect;
+    use crate::shapes::triangle::triangle_intersect;
     use approx::assert_abs_diff_eq;
     use rand::Rng;
 
