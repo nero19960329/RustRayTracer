@@ -59,7 +59,7 @@ smallpt scene MCPT 1024x768 16384spp
 
 Cornell Box scene MCPT 500x500 16384spp
 
-![Cornell Box scene MCPT 500x500 16384spp](https://i.imgur.com/e4lEBgj.png)
+![Cornell Box scene MCPT 500x500 16384spp](https://i.imgur.com/ipIuT0M.png)
 
 # Gallery
 
