@@ -55,7 +55,7 @@ A soft ray tracer implemented by Rust.
 
 smallpt scene MCPT 1024x768 16384spp
 
-![smallpt scene MCPT 1024x768 16384spp](https://i.imgur.com/gGxFOkM.png)
+![smallpt scene MCPT 1024x768 16384spp](https://i.imgur.com/DuFLUKm.png)
 
 Cornell Box scene MCPT 500x500 16384spp
 
@@ -63,4 +63,4 @@ Cornell Box scene MCPT 500x500 16384spp
 
 # Gallery
 
-https://storage.cloud.google.com/rust-ray-tracer/gallery/v0.2.0/report.html
+https://storage.cloud.google.com/rust-ray-tracer/gallery/v0.2.1/report.html
