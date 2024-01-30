@@ -1,25 +1,24 @@
-use super::material::Material;
-use super::math::{max_component, Point3D, Ray, Vec3D};
-use super::sampler::Sampler;
-use super::scene::Scene;
+use super::super::material::Material;
+use super::super::math::{max_component, Point3D, Ray, Vec3D};
+use super::super::sampler::Sampler;
+use super::super::scene::Scene;
 use cgmath::{Array, ElementWise, InnerSpace, Zero};
 use log::warn;
 use std::sync::Arc;
 
-const MIN_DEPTH: u32 = 2;
-const MAX_DEPTH: u32 = 6;
-
-struct PathVertex {
+pub struct PathVertex {
     position: Point3D,
     normal: Vec3D,
     beta: Vec3D, // throughput, means cumulative contribution of the path
     material: Option<Arc<dyn Material>>,
 }
 
-fn generate_camera_vertices(
+pub fn generate_camera_vertices(
     camera_ray: &Ray,
     scene: &Scene,
     sampler: &mut dyn Sampler,
+    min_depth: usize,
+    max_depth: usize,
 ) -> Vec<PathVertex> {
     let mut path: Vec<PathVertex> = Vec::new();
     let mut beta = Vec3D::new(1.0, 1.0, 1.0);
@@ -33,7 +32,7 @@ fn generate_camera_vertices(
     };
     path.push(path_vertex);
 
-    for depth in 0..MAX_DEPTH {
+    for depth in 0..max_depth {
         let hit = scene.intersect(&ray);
         if hit.is_none() {
             break;
@@ -54,7 +53,7 @@ fn generate_camera_vertices(
             break;
         }
 
-        let continue_prob = if depth > MIN_DEPTH {
+        let continue_prob = if depth > min_depth {
             max_component(beta).min(1.0)
         } else {
             1.0
@@ -91,7 +90,7 @@ fn generate_camera_vertices(
     return path;
 }
 
-fn emissive_material(material: &Option<Arc<dyn Material>>) -> bool {
+pub fn emissive_material(material: &Option<Arc<dyn Material>>) -> bool {
     if material.is_none() {
         return false;
     }
@@ -99,13 +98,13 @@ fn emissive_material(material: &Option<Arc<dyn Material>>) -> bool {
     material.emission().magnitude() > 1e-6
 }
 
-fn connect(
-    scene: &Scene,
+pub fn connect(
+    _scene: &Scene,
     camera_vertices: &Vec<PathVertex>,
-    light_vertices: &Vec<PathVertex>,
+    _light_vertices: &Vec<PathVertex>,
     s: usize,
     t: usize,
-    sampler: &mut dyn Sampler,
+    _sampler: &mut dyn Sampler,
 ) -> Vec3D {
     let mut color = Vec3D::zero();
 
@@ -122,28 +121,6 @@ fn connect(
         }
     } else {
         panic!("not implemented");
-    }
-
-    color
-}
-
-pub fn trace(ray: &Ray, scene: &Scene, sampler: &mut dyn Sampler) -> Vec3D {
-    let camera_vertices = generate_camera_vertices(ray, scene, sampler);
-    let light_vertices: Vec<PathVertex> = Vec::new();
-
-    let camera_vertex_count = camera_vertices.len();
-    let light_vertex_count = light_vertices.len();
-
-    let mut color = Vec3D::zero();
-    for t in 1..(camera_vertex_count + 1) {
-        for s in 0..(light_vertex_count + 1) {
-            let depth = (s + t) as i32 - 2;
-            if (s == 1 && t == 1) || depth < 0 || depth > MAX_DEPTH as i32 {
-                continue;
-            }
-
-            color += connect(scene, &camera_vertices, &light_vertices, s, t, sampler);
-        }
     }
 
     color

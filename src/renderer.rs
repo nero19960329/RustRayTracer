@@ -1,7 +1,7 @@
 use super::math::{Point2U, Vec3D, Vec3DConfig};
-use super::raytracer::trace;
 use super::sampler::SamplerConfig;
 use super::scene::Scene;
+use super::tracers::TracerConfig;
 use cgmath::ElementWise;
 use image::{ImageBuffer, RgbImage};
 use indicatif::{ProgressBar, ProgressStyle};
@@ -11,6 +11,7 @@ use std::sync::{Arc, Mutex};
 
 #[derive(Deserialize)]
 pub struct RenderConfig {
+    pub tracer: TracerConfig,
     pub image: ImageConfig,
     pub sampler: SamplerConfig,
     post_processing: PostProcessingConfig,
@@ -107,6 +108,7 @@ pub fn render(config: &RenderConfig, scene: &Scene) -> RgbImage {
             let x_end = (x_start + tile_size).min(config.image.width as usize);
             let y_end = (y_start + tile_size).min(config.image.height as usize);
 
+            let mut tracer = config.tracer.to_tracer();
             let mut sampler = config.sampler.to_sampler();
             let spp = sampler.samples_per_pixel();
             for y in y_start..y_end {
@@ -118,7 +120,7 @@ pub fn render(config: &RenderConfig, scene: &Scene) -> RgbImage {
                         let u = (x as f64 + u_offset + 0.5) / config.image.width as f64;
                         let v = 1.0 - (y as f64 + v_offset + 0.5) / config.image.height as f64;
                         let ray = scene.camera.create_ray(u, v);
-                        color += trace(&ray, scene, &mut *sampler);
+                        color += tracer.trace(&ray, scene, &mut *sampler);
                         if !sampler.start_next_sample() {
                             break;
                         }
