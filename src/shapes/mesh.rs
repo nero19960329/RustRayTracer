@@ -1,10 +1,10 @@
-use super::super::material::{Material, MaterialConfig};
+use super::super::common::HitRecord;
 use super::super::math::{
     transform_point3, transform_vec3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig,
     Point3D, Ray, Vec3D,
 };
-use super::common::HitRecord;
 use super::quadrilateral::quadrilateral_intersect;
+use super::shape::Shape;
 use super::triangle::triangle_intersect;
 use super::utils::load_mesh;
 use cgmath::InnerSpace;
@@ -16,18 +16,16 @@ pub struct Mesh {
     pub vertices: Vec<Point3D>,
     pub normals: Vec<Vec3D>,
     pub indices: Vec<Vec<usize>>,
-    pub material: Arc<dyn Material>,
 }
 
 #[derive(Deserialize)]
 pub struct MeshConfig {
     file: String,
-    material: MaterialConfig,
     transform: Option<Matrix4DConfig>,
 }
 
-impl Mesh {
-    pub fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+impl Shape for Mesh {
+    fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut hit_record: Option<HitRecord> = None;
         let mut closest_so_far = t_max;
 
@@ -82,14 +80,15 @@ impl Mesh {
                 t: t,
                 p: p,
                 normal: normal,
-                material: Arc::clone(&self.material),
+                shape: Some(self as &dyn Shape),
+                object: None,
             });
         }
 
         hit_record
     }
 
-    pub fn transform(&mut self, transform: &Matrix4D) -> Self {
+    fn transform(&self, transform: &Matrix4D) -> Arc<dyn Shape> {
         let mesh = Mesh {
             vertices: self
                 .vertices
@@ -102,15 +101,14 @@ impl Mesh {
                 .map(|n| transform_vec3(*transform, *n).normalize())
                 .collect(),
             indices: self.indices.clone(),
-            material: Arc::clone(&self.material),
         };
-        mesh
+        Arc::new(mesh)
     }
 }
 
 impl MeshConfig {
-    pub fn to_instance(&self) -> Mesh {
-        load_mesh(&self.file, self.material.to_material())
+    pub fn to_shape(&self) -> Arc<dyn Shape> {
+        load_mesh(&self.file)
             .unwrap()
             .transform(&unwrap_matrix4d_config_to_matrix4d(self.transform.as_ref()))
     }

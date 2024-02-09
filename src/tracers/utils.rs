@@ -6,20 +6,20 @@ use cgmath::{Array, ElementWise, InnerSpace, Zero};
 use log::warn;
 use std::sync::Arc;
 
-pub struct PathVertex {
+pub struct PathVertex<'a> {
     position: Point3D,
     normal: Vec3D,
     beta: Vec3D, // throughput, means cumulative contribution of the path
-    material: Option<Arc<dyn Material>>,
+    material: Option<&'a Arc<dyn Material>>,
 }
 
-pub fn generate_camera_vertices(
+pub fn generate_camera_vertices<'a>(
     camera_ray: &Ray,
-    scene: &Scene,
+    scene: &'a Scene,
     sampler: &mut dyn Sampler,
     min_depth: usize,
     max_depth: usize,
-) -> Vec<PathVertex> {
+) -> Vec<PathVertex<'a>> {
     let mut path: Vec<PathVertex> = Vec::new();
     let mut beta = Vec3D::new(1.0, 1.0, 1.0);
     let mut ray = camera_ray.clone();
@@ -39,13 +39,13 @@ pub fn generate_camera_vertices(
         }
 
         let hit = hit.unwrap();
-        let material = &hit.material;
+        let material = &hit.object.unwrap().material;
 
         let path_vertex = PathVertex {
             position: hit.p,
             normal: hit.normal,
             beta: beta,
-            material: Some(Arc::clone(material)),
+            material: Some(material),
         };
         path.push(path_vertex);
 
@@ -90,7 +90,7 @@ pub fn generate_camera_vertices(
     return path;
 }
 
-pub fn emissive_material(material: &Option<Arc<dyn Material>>) -> bool {
+pub fn emissive_material(material: &Option<&Arc<dyn Material>>) -> bool {
     if material.is_none() {
         return false;
     }

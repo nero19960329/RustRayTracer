@@ -20,7 +20,7 @@ pub struct MonteCarloPathTracerConfig {
 impl Tracer for MonteCarloPathTracer {
     fn trace(&mut self, ray: &Ray, scene: &Scene, sampler: &mut dyn Sampler) -> Vec3D {
         let camera_vertices =
-            generate_camera_vertices(ray, scene, sampler, self.min_depth, self.max_depth);
+            { generate_camera_vertices(ray, scene, sampler, self.min_depth, self.max_depth) };
         let light_vertices: Vec<PathVertex> = Vec::new();
 
         let camera_vertex_count = camera_vertices.len();

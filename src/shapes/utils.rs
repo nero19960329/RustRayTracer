@@ -1,4 +1,3 @@
-use super::super::material::Material;
 use super::super::math::{Point3D, Vec3D};
 use super::mesh::Mesh;
 use super::quadrilateral::{are_points_coplanar, is_quadrilateral_convex};
@@ -7,16 +6,15 @@ use log::info;
 use ply_rs::parser::Parser;
 use ply_rs::ply::DefaultElement;
 use std::fs::File;
-use std::sync::Arc;
 
 pub trait MeshLoader {
-    fn load(&self, path: &str, material: Arc<dyn Material>) -> Mesh;
+    fn load(&self, path: &str) -> Mesh;
 }
 
 pub struct PlyMeshLoader {}
 
 impl MeshLoader for PlyMeshLoader {
-    fn load(&self, path: &str, material: Arc<dyn Material>) -> Mesh {
+    fn load(&self, path: &str) -> Mesh {
         info!("Loading mesh from {}", path);
         let mut file = File::open(path).unwrap();
         let p = Parser::<DefaultElement>::new();
@@ -79,14 +77,13 @@ impl MeshLoader for PlyMeshLoader {
             vertices,
             normals,
             indices,
-            material,
         }
     }
 }
 
-pub fn load_mesh(path: &str, material: Arc<dyn Material>) -> Result<Mesh, String> {
+pub fn load_mesh(path: &str) -> Result<Mesh, String> {
     let mesh = match path.split('.').last() {
-        Some("ply") => PlyMeshLoader {}.load(path, material),
+        Some("ply") => PlyMeshLoader {}.load(path),
         _ => return Err(format!("Unsupported mesh format: {}", path)),
     };
 
@@ -125,12 +122,11 @@ pub fn load_mesh(path: &str, material: Arc<dyn Material>) -> Result<Mesh, String
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::material::MockMaterial;
 
     #[test]
     fn test_load_mesh() {
         let ply_name = "assets/test.ply";
-        let mesh = load_mesh(ply_name, Arc::new(MockMaterial {})).expect("Failed to load mesh");
+        let mesh = load_mesh(ply_name).expect("Failed to load mesh");
         assert_eq!(mesh.vertices.len(), 24);
         assert_eq!(mesh.normals.len(), 24);
         assert_eq!(mesh.indices.len(), 6);

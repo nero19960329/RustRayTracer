@@ -1,9 +1,9 @@
-use super::super::material::{Material, MaterialConfig};
+use super::super::common::HitRecord;
 use super::super::math::{
     transform_point3, transform_vec3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig,
     Point3D, Point3DConfig, Ray, Vec3D, Vec3DConfig,
 };
-use super::common::HitRecord;
+use super::shape::Shape;
 use cgmath::InnerSpace;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -12,19 +12,17 @@ use std::sync::Arc;
 pub struct Plane {
     pub point: Point3D,
     pub normal: Vec3D,
-    pub material: Arc<dyn Material>,
 }
 
 #[derive(Deserialize)]
 pub struct PlaneConfig {
     pub point: Point3DConfig,
     pub normal: Vec3DConfig,
-    pub material: MaterialConfig,
     pub transform: Option<Matrix4DConfig>,
 }
 
-impl Plane {
-    pub fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+impl Shape for Plane {
+    fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let denominator = self.normal.dot(ray.direction);
         if denominator.abs() < 1e-6 {
             return None;
@@ -40,25 +38,24 @@ impl Plane {
             t: distance,
             p: ray.at(distance),
             normal: self.normal,
-            material: Arc::clone(&self.material),
+            shape: Some(self as &dyn Shape),
+            object: None,
         })
     }
 
-    pub fn transform(&mut self, transform: &Matrix4D) -> Self {
-        Plane {
+    fn transform(&self, transform: &Matrix4D) -> Arc<dyn Shape> {
+        Arc::new(Plane {
             point: transform_point3(*transform, self.point),
             normal: transform_vec3(*transform, self.normal).normalize(),
-            material: Arc::clone(&self.material),
-        }
+        })
     }
 }
 
 impl PlaneConfig {
-    pub fn to_instance(&self) -> Plane {
+    pub fn to_shape(&self) -> Arc<dyn Shape> {
         Plane {
             point: self.point.to_point(),
             normal: self.normal.to_vec3().normalize(),
-            material: self.material.to_material(),
         }
         .transform(&unwrap_matrix4d_config_to_matrix4d(self.transform.as_ref()))
     }
@@ -67,7 +64,7 @@ impl PlaneConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{material::MockMaterial, math::vec3_approx_eq};
+    use crate::math::vec3_approx_eq;
     use approx::assert_abs_diff_eq;
     use rand::Rng;
 
@@ -89,7 +86,6 @@ mod tests {
             let plane = Plane {
                 point: point,
                 normal: normal,
-                material: Arc::new(MockMaterial {}),
             };
             let p1 = Ray {
                 origin: point,

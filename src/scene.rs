@@ -1,6 +1,7 @@
 use super::camera::{Camera, CameraConfig};
+use super::common::HitRecord;
 use super::math::Ray;
-use super::objects::{HitRecord, Object, ObjectConfig};
+use super::object::{Object, ObjectConfig};
 use serde::Deserialize;
 use std::sync::Arc;
 

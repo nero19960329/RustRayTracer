@@ -7,6 +7,7 @@ vfov = 30.0
 aspect = 1.33
 
 [[objects]]
+[objects.shape]
 type = "Sphere"
 center = { x = 50.0, y = 681.33, z = 81.6 }
 radius = 600.0
@@ -15,6 +16,7 @@ type = "Emissive"
 color = { x = 12.0, y = 12.0, z = 12.0 }
 
 [[objects]]
+[objects.shape]
 type = "Plane"
 point = { x = 1.0, y = 40.8, z = 81.6 }
 normal = { x = 1.0, y = 0.0, z = 0.0 }
@@ -23,6 +25,7 @@ type = "Lambertian"
 albedo = { x = 0.75, y = 0.25, z = 0.25 }
 
 [[objects]]
+[objects.shape]
 type = "Plane"
 point = { x = 99.0, y = 40.8, z = 81.6 }
 normal = { x = -1.0, y = 0.0, z = 0.0 }
@@ -31,6 +34,7 @@ type = "Lambertian"
 albedo = { x = 0.25, y = 0.25, z = 0.75 }
 
 [[objects]]
+[objects.shape]
 type = "Plane"
 point = { x = 50.0, y = 40.8, z = 0.0 }
 normal = { x = 0.0, y = 0.0, z = 1.0 }
@@ -39,6 +43,7 @@ type = "Lambertian"
 albedo = { x = 0.75, y = 0.75, z = 0.75 }
 
 [[objects]]
+[objects.shape]
 type = "Plane"
 point = { x = 50.0, y = 40.8, z = 300.0 }
 normal = { x = 0.0, y = 0.0, z = -1.0 }
@@ -47,6 +52,7 @@ type = "Lambertian"
 albedo = { x = 0.75, y = 0.75, z = 0.75 }
 
 [[objects]]
+[objects.shape]
 type = "Plane"
 point = { x = 50.0, y = 0.0, z = 81.6 }
 normal = { x = 0.0, y = 1.0, z = 0.0 }
@@ -55,6 +61,7 @@ type = "Lambertian"
 albedo = { x = 0.75, y = 0.75, z = 0.75 }
 
 [[objects]]
+[objects.shape]
 type = "Plane"
 point = { x = 50.0, y = 81.6, z = 81.6 }
 normal = { x = 0.0, y = -1.0, z = 0.0 }
@@ -63,6 +70,7 @@ type = "Lambertian"
 albedo = { x = 0.75, y = 0.75, z = 0.75 }
 
 [[objects]]
+[objects.shape]
 type = "Sphere"
 center = { x = 27.0, y = 16.5, z = 47.0 }
 radius = 16.5
@@ -70,6 +78,7 @@ radius = 16.5
 type = "IdealReflector"
 
 [[objects]]
+[objects.shape]
 type = "Sphere"
 center = { x = 73.0, y = 16.5, z = 78.0 }
 radius = 16.5

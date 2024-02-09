@@ -1,9 +1,9 @@
-use super::super::material::{Material, MaterialConfig};
+use super::super::common::HitRecord;
 use super::super::math::{
     transform_point3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig, Point3D,
     Point3DConfig, Ray,
 };
-use super::common::HitRecord;
+use super::shape::Shape;
 use cgmath::InnerSpace;
 use log::debug;
 use serde::Deserialize;
@@ -12,13 +12,11 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub struct Quadrilateral {
     pub vertices: [Point3D; 4],
-    pub material: Arc<dyn Material>,
 }
 
 #[derive(Deserialize)]
 pub struct QuadrilateralConfig {
     pub vertices: [Point3DConfig; 4],
-    pub material: MaterialConfig,
     pub transform: Option<Matrix4DConfig>,
 }
 
@@ -163,8 +161,8 @@ pub fn quadrilateral_intersect(
     Some((ray_t, u * (1.0 - v), u * v, (1.0 - u) * v))
 }
 
-impl Quadrilateral {
-    pub fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+impl Shape for Quadrilateral {
+    fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let (t, _u, _v, _w) = match quadrilateral_intersect(
             self.vertices[0],
             self.vertices[1],
@@ -186,25 +184,25 @@ impl Quadrilateral {
             t: t,
             p: p,
             normal: normal,
-            material: Arc::clone(&self.material),
+            shape: Some(self as &dyn Shape),
+            object: None,
         });
     }
 
-    pub fn transform(&mut self, transform: &Matrix4D) -> Self {
-        Quadrilateral {
+    fn transform(&self, transform: &Matrix4D) -> Arc<dyn Shape> {
+        Arc::new(Quadrilateral {
             vertices: [
                 transform_point3(*transform, self.vertices[0]),
                 transform_point3(*transform, self.vertices[1]),
                 transform_point3(*transform, self.vertices[2]),
                 transform_point3(*transform, self.vertices[3]),
             ],
-            material: Arc::clone(&self.material),
-        }
+        })
     }
 }
 
 impl QuadrilateralConfig {
-    pub fn to_instance(&self) -> Quadrilateral {
+    pub fn to_shape(&self) -> Arc<dyn Shape> {
         Quadrilateral {
             vertices: [
                 self.vertices[0].to_point(),
@@ -212,7 +210,6 @@ impl QuadrilateralConfig {
                 self.vertices[2].to_point(),
                 self.vertices[3].to_point(),
             ],
-            material: self.material.to_material(),
         }
         .transform(&unwrap_matrix4d_config_to_matrix4d(self.transform.as_ref()))
     }
@@ -221,7 +218,7 @@ impl QuadrilateralConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::objects::triangle::triangle_intersect;
+    use crate::shapes::triangle::triangle_intersect;
     use approx::assert_abs_diff_eq;
     use rand::Rng;
 
