@@ -1,3 +1,8 @@
+[tracer]
+type = "mcpt"
+min_depth = 2
+max_depth = 6
+
 [image]
 width = 500
 height = 500

@@ -1,9 +1,9 @@
-use super::super::material::{Material, MaterialConfig};
+use super::super::common::HitRecord;
 use super::super::math::{
     transform_point3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig, Point3D,
     Point3DConfig, Ray,
 };
-use super::common::HitRecord;
+use super::shape::Shape;
 use cgmath::InnerSpace;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -12,14 +12,12 @@ use std::sync::Arc;
 pub struct Sphere {
     pub center: Point3D,
     pub radius: f64,
-    pub material: Arc<dyn Material>,
 }
 
 #[derive(Deserialize)]
 pub struct SphereConfig {
     pub center: Point3DConfig,
     pub radius: f64,
-    pub material: MaterialConfig,
     pub transform: Option<Matrix4DConfig>,
 }
 
@@ -52,7 +50,8 @@ impl Sphere {
             t: root,
             p: point,
             normal: normal,
-            material: Arc::clone(&self.material),
+            shape: Some(self as &dyn Shape),
+            object: None,
         })
     }
 
@@ -91,29 +90,30 @@ impl Sphere {
             t: t0,
             p: point,
             normal: normal,
-            material: Arc::clone(&self.material),
+            shape: Some(self as &dyn Shape),
+            object: None,
         })
     }
+}
 
-    pub fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+impl Shape for Sphere {
+    fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         return self.intersect_geometric(ray, t_min, t_max);
     }
 
-    pub fn transform(&mut self, transform: &Matrix4D) -> Self {
-        Sphere {
+    fn transform(&self, transform: &Matrix4D) -> Arc<dyn Shape> {
+        Arc::new(Sphere {
             center: transform_point3(*transform, self.center),
             radius: self.radius,
-            material: Arc::clone(&self.material),
-        }
+        })
     }
 }
 
 impl SphereConfig {
-    pub fn to_instance(&self) -> Sphere {
+    pub fn to_shape(&self) -> Arc<dyn Shape> {
         Sphere {
             center: self.center.to_point(),
             radius: self.radius,
-            material: self.material.to_material(),
         }
         .transform(&unwrap_matrix4d_config_to_matrix4d(self.transform.as_ref()))
     }
@@ -122,10 +122,7 @@ impl SphereConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        material::MockMaterial,
-        math::{point_approx_eq, vec3_approx_eq, Vec3D},
-    };
+    use crate::math::{point_approx_eq, vec3_approx_eq, Vec3D};
     use approx::assert_abs_diff_eq;
     use rand::Rng;
 
@@ -142,7 +139,6 @@ mod tests {
             let sphere = Sphere {
                 center: center,
                 radius: radius,
-                material: Arc::new(MockMaterial {}),
             };
             let p1 = Ray {
                 origin: center,

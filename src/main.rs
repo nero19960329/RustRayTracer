@@ -1,11 +1,13 @@
 mod camera;
+mod common;
 mod material;
 mod math;
-mod objects;
-mod raytracer;
+mod object;
 mod renderer;
 mod sampler;
 mod scene;
+mod shapes;
+mod tracers;
 
 use clap::Parser;
 use log::info;

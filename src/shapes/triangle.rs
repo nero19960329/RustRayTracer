@@ -1,9 +1,9 @@
-use super::super::material::{Material, MaterialConfig};
+use super::super::common::HitRecord;
 use super::super::math::{
     transform_point3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig, Point3D,
     Point3DConfig, Ray,
 };
-use super::common::HitRecord;
+use super::shape::Shape;
 use cgmath::InnerSpace;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -11,13 +11,11 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub struct Triangle {
     pub vertices: [Point3D; 3],
-    pub material: Arc<dyn Material>,
 }
 
 #[derive(Deserialize)]
 pub struct TriangleConfig {
     pub vertices: [Point3DConfig; 3],
-    pub material: MaterialConfig,
     pub transform: Option<Matrix4DConfig>,
 }
 
@@ -62,8 +60,8 @@ pub fn triangle_intersect(
     }
 }
 
-impl Triangle {
-    pub fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+impl Shape for Triangle {
+    fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let (t, _u, _v) = match triangle_intersect(
             self.vertices[0],
             self.vertices[1],
@@ -84,31 +82,30 @@ impl Triangle {
             t: t,
             p: p,
             normal: normal,
-            material: Arc::clone(&self.material),
+            shape: Some(self as &dyn Shape),
+            object: None,
         });
     }
 
-    pub fn transform(&mut self, transform: &Matrix4D) -> Self {
-        Triangle {
+    fn transform(&self, transform: &Matrix4D) -> Arc<dyn Shape> {
+        Arc::new(Triangle {
             vertices: [
                 transform_point3(*transform, self.vertices[0]),
                 transform_point3(*transform, self.vertices[1]),
                 transform_point3(*transform, self.vertices[2]),
             ],
-            material: Arc::clone(&self.material),
-        }
+        })
     }
 }
 
 impl TriangleConfig {
-    pub fn to_instance(&self) -> Triangle {
+    pub fn to_shape(&self) -> Arc<dyn Shape> {
         Triangle {
             vertices: [
                 self.vertices[0].to_point(),
                 self.vertices[1].to_point(),
                 self.vertices[2].to_point(),
             ],
-            material: self.material.to_material(),
         }
         .transform(&unwrap_matrix4d_config_to_matrix4d(self.transform.as_ref()))
     }
@@ -117,10 +114,7 @@ impl TriangleConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        material::MockMaterial,
-        math::{vec3_approx_eq, Vec3D},
-    };
+    use crate::math::{vec3_approx_eq, Vec3D};
     use approx::assert_abs_diff_eq;
     use rand::Rng;
 
@@ -145,7 +139,6 @@ mod tests {
             );
             let triangle = Triangle {
                 vertices: [v0, v1, v2],
-                material: Arc::new(MockMaterial {}),
             };
             let p1 = Ray {
                 origin: v0,
