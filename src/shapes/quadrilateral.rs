@@ -1,9 +1,11 @@
 use super::super::common::HitRecord;
 use super::super::math::{
     transform_point3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig, Point3D,
-    Point3DConfig, Ray,
+    Point3DConfig, Ray, Vec3D,
 };
-use super::shape::Shape;
+use super::super::sampler::Sampler;
+use super::shape::{SampleResult, Shape};
+use super::triangle::{triangle_area, triangle_sample};
 use cgmath::InnerSpace;
 use log::debug;
 use serde::Deserialize;
@@ -161,6 +163,38 @@ pub fn quadrilateral_intersect(
     Some((ray_t, u * (1.0 - v), u * v, (1.0 - u) * v))
 }
 
+pub fn quadrilateral_sample(
+    v0: Point3D,
+    v1: Point3D,
+    v2: Point3D,
+    v3: Point3D,
+    u: f64,
+    v: f64,
+    p: f64,
+) -> Point3D {
+    // tri0: v0, v1, v2
+    // tri1: v0, v2, v3
+    let area0 = triangle_area(v0, v1, v2);
+    let area1 = triangle_area(v0, v2, v3);
+    let total_area = area0 + area1;
+
+    if p < area0 / total_area {
+        // sample tri0
+        triangle_sample(v0, v1, v2, u, v)
+    } else {
+        // sample tri1
+        triangle_sample(v0, v2, v3, u, v)
+    }
+}
+
+pub fn quadrilateral_area(v0: Point3D, v1: Point3D, v2: Point3D, v3: Point3D) -> f64 {
+    triangle_area(v0, v1, v2) + triangle_area(v0, v2, v3)
+}
+
+pub fn quadrilateral_normal(v0: Point3D, v1: Point3D, v2: Point3D, _v3: Point3D) -> Vec3D {
+    (v1 - v0).cross(v2 - v0).normalize()
+}
+
 impl Shape for Quadrilateral {
     fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let (t, _u, _v, _w) = match quadrilateral_intersect(
@@ -199,6 +233,37 @@ impl Shape for Quadrilateral {
             ],
         })
     }
+
+    fn sample(&self, sampler: &mut dyn Sampler) -> SampleResult {
+        let (u, v) = sampler.get_2d();
+        let p = quadrilateral_sample(
+            self.vertices[0],
+            self.vertices[1],
+            self.vertices[2],
+            self.vertices[3],
+            u,
+            v,
+            sampler.get_1d(),
+        );
+        let normal = quadrilateral_normal(
+            self.vertices[0],
+            self.vertices[1],
+            self.vertices[2],
+            self.vertices[3],
+        );
+        let area = quadrilateral_area(
+            self.vertices[0],
+            self.vertices[1],
+            self.vertices[2],
+            self.vertices[3],
+        );
+
+        SampleResult {
+            p: p,
+            normal: normal,
+            pdf: 1.0 / area,
+        }
+    }
 }
 
 impl QuadrilateralConfig {
@@ -218,7 +283,7 @@ impl QuadrilateralConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::shapes::triangle::triangle_intersect;
+    use crate::shapes::triangle::{in_triangle, triangle_intersect};
     use approx::assert_abs_diff_eq;
     use rand::Rng;
 
@@ -322,6 +387,26 @@ mod tests {
                     epsilon = 1e-6
                 );
             }
+        }
+    }
+
+    #[test]
+    fn test_quadrilateral_sample() {
+        let mut rng = rand::thread_rng();
+        for _ in 0..20 {
+            let v0 = Point3D::new(rng.gen_range(-10.0..0.0), rng.gen_range(0.0..10.0), 0.0);
+            let v1 = Point3D::new(rng.gen_range(-10.0..0.0), rng.gen_range(-10.0..0.0), 0.0);
+            let v2 = Point3D::new(rng.gen_range(0.0..10.0), rng.gen_range(-10.0..0.0), 0.0);
+            let v3 = Point3D::new(rng.gen_range(0.0..10.0), rng.gen_range(0.0..10.0), 0.0);
+            if !is_quadrilateral_convex(v0, v1, v2, v3) {
+                continue;
+            }
+
+            let u = rng.gen::<f64>();
+            let v = rng.gen::<f64>();
+            let q = rng.gen::<f64>();
+            let p = quadrilateral_sample(v0, v1, v2, v3, u, v, q);
+            assert!(in_triangle(p, v0, v1, v2) || in_triangle(p, v0, v2, v3));
         }
     }
 }

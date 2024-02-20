@@ -3,7 +3,8 @@ use super::super::math::{
     transform_point3, transform_vec3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig,
     Point3D, Point3DConfig, Ray, Vec3D, Vec3DConfig,
 };
-use super::shape::Shape;
+use super::super::sampler::Sampler;
+use super::shape::{SampleResult, Shape};
 use cgmath::InnerSpace;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -48,6 +49,10 @@ impl Shape for Plane {
             point: transform_point3(*transform, self.point),
             normal: transform_vec3(*transform, self.normal).normalize(),
         })
+    }
+
+    fn sample(&self, _sampler: &mut dyn Sampler) -> SampleResult {
+        unimplemented!("infinite plane cannot be sampled")
     }
 }
 

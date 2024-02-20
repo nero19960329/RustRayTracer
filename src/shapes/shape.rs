@@ -1,5 +1,6 @@
 use super::super::common::HitRecord;
-use super::super::math::{Matrix4D, Ray};
+use super::super::math::{Matrix4D, Point3D, Ray, Vec3D};
+use super::super::sampler::Sampler;
 use super::mesh::MeshConfig;
 use super::plane::PlaneConfig;
 use super::quadrilateral::QuadrilateralConfig;
@@ -8,9 +9,16 @@ use super::triangle::TriangleConfig;
 use serde::Deserialize;
 use std::sync::Arc;
 
+pub struct SampleResult {
+    pub p: Point3D,
+    pub normal: Vec3D,
+    pub pdf: f64,
+}
+
 pub trait Shape: Send + Sync {
     fn intersect(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
     fn transform(&self, transform: &Matrix4D) -> Arc<dyn Shape>;
+    fn sample(&self, sampler: &mut dyn Sampler) -> SampleResult;
 }
 
 #[derive(Deserialize)]

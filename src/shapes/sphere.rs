@@ -1,11 +1,13 @@
 use super::super::common::HitRecord;
 use super::super::math::{
     transform_point3, unwrap_matrix4d_config_to_matrix4d, Matrix4D, Matrix4DConfig, Point3D,
-    Point3DConfig, Ray,
+    Point3DConfig, Ray, Vec3D,
 };
-use super::shape::Shape;
+use super::super::sampler::Sampler;
+use super::shape::{SampleResult, Shape};
 use cgmath::InnerSpace;
 use serde::Deserialize;
+use std::f64::consts::PI;
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -107,6 +109,21 @@ impl Shape for Sphere {
             radius: self.radius,
         })
     }
+
+    fn sample(&self, sampler: &mut dyn Sampler) -> SampleResult {
+        let (u, v) = sampler.get_2d();
+        let z = 1.0 - 2.0 * u;
+        let r = (1.0 - z * z).sqrt();
+        let phi = 2.0 * PI * v;
+        let x = r * phi.cos();
+        let y = r * phi.sin();
+
+        SampleResult {
+            p: self.center + Vec3D::new(x, y, z) * self.radius,
+            normal: Vec3D::new(x, y, z),
+            pdf: 1.0 / (4.0 * PI * self.radius * self.radius),
+        }
+    }
 }
 
 impl SphereConfig {
@@ -175,6 +192,32 @@ mod tests {
                 point_approx_eq(hit_analytic.p, hit_geometric.p, 1e-6);
                 vec3_approx_eq(hit_analytic.normal, hit_geometric.normal, 1e-6);
             }
+        }
+    }
+
+    #[test]
+    fn test_sphere_sample() {
+        let mut rng = rand::thread_rng();
+        for _ in 0..10 {
+            let center = Point3D::new(
+                rng.gen_range(-10.0..10.0),
+                rng.gen_range(-10.0..10.0),
+                rng.gen_range(-10.0..10.0),
+            );
+            let radius = rng.gen_range(0.1..10.0);
+            let sphere = Sphere {
+                center: center,
+                radius: radius,
+            };
+            let mut sampler = crate::sampler::RandomSampler::new(0);
+            let sample = sphere.sample(&mut sampler);
+            assert_abs_diff_eq!((sample.p - center).magnitude(), radius, epsilon = 1e-6);
+            assert_abs_diff_eq!(sample.normal.magnitude(), 1.0, epsilon = 1e-6);
+            assert_abs_diff_eq!(
+                sample.pdf,
+                1.0 / (4.0 * PI * radius * radius),
+                epsilon = 1e-6
+            );
         }
     }
 }
